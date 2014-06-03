@@ -1,0 +1,53 @@
+﻿using System;
+using System.IO;
+using System.Text.RegularExpressions;
+
+namespace Tvdb2File
+{
+   public class SeasonPathInfo
+   {
+      public string SeasonPath
+      {
+         get;
+         private set;
+      }
+
+      public int SeasonNumber
+      {
+         get;
+         private set;
+      }
+
+      public string SeriesPath
+      {
+         get;
+         private set;
+      }
+
+      public string SeriesName
+      {
+         get;
+         private set;
+      }
+
+      public SeasonPathInfo( string seasonPath )
+      {
+         this.SeasonPath = seasonPath;
+         this.SeriesPath = Path.GetDirectoryName( this.SeasonPath );
+         this.SeriesName = this.SeriesPath.Substring( Path.GetDirectoryName( this.SeriesPath ).Length + 1 ).TrimEnd( '\\' );
+
+         var regex = new Regex( @"(?i)Season \d+$" );
+         var match = regex.Match( this.SeasonPath );
+
+         if ( !match.Success )
+         {
+            throw new ArgumentException( "The season directory in the path was not formatted correctly.  It needs to be of the form \"Season n\", where n is an integer." );
+         }
+
+         regex = new Regex( @"\d+" );
+         match = regex.Match( match.Value );
+
+         this.SeasonNumber = Int32.Parse( match.Value );
+      }
+   }
+}
