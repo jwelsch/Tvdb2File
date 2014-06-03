@@ -1,4 +1,12 @@
-﻿using System;
+﻿//////////////////////////////////////////////////////////////////////////////
+// <copyright file="Exceptions.cs" owner="Justin Welsch">
+// Copyright (c) 2014 All Rights Reserved
+// <author>Justin Welsch</author>
+// </copyright>
+//////////////////////////////////////////////////////////////////////////////
+      
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 

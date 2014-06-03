@@ -1,4 +1,11 @@
-﻿using System;
+﻿//////////////////////////////////////////////////////////////////////////////
+// <copyright file="FileRenamer.cs" owner="Justin Welsch">
+// Copyright (c) 2014 All Rights Reserved
+// <author>Justin Welsch</author>
+// </copyright>
+//////////////////////////////////////////////////////////////////////////////
+
+using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
