@@ -4,7 +4,7 @@
 // <author>Justin Welsch</author>
 // </copyright>
 //////////////////////////////////////////////////////////////////////////////
-      
+
 using System;
 using System.Net;
 using System.Collections.Generic;
@@ -97,38 +97,43 @@ namespace Tvdb2File
 
          var uriString = String.Format( @"http://thetvdb.com/api/GetSeries.php?seriesname={0}&language={1}", seriesName, language );
          var seriesData = this.GetHttpStringData( new Uri( uriString ) );
-//         var seriesData = @"<?xml version=""1.0"" encoding=""UTF-8"" ?>
-//<Data>
-//<Series>
-//<seriesid>71470</seriesid>
-//<language>en</language>
-//<SeriesName>Star Trek: The Next Generation</SeriesName>
-//<banner>graphical/71470-g.jpg</banner>
-//<Overview>A century after Captain Kirk's five year mission, the next generation of Starfleet officers begins their journey aboard the new flagship of the Federation.
-//
-//Commanded by Captain Jean-Luc Picard the Galaxy class starship Enterprise NCC-1701-D will seek out new life and new civilizations - to boldly go where no one has gone before.</Overview>
-//<FirstAired>1987-09-28</FirstAired>
-//<Network>Syndicated</Network>
-//<IMDB_ID>tt0092455</IMDB_ID>
-//<zap2it_id>EP00003986</zap2it_id>
-//<id>71470</id>
-//</Series>
-//</Data>";
+         //         var seriesData = @"<?xml version=""1.0"" encoding=""UTF-8"" ?>
+         //<Data>
+         //<Series>
+         //<seriesid>71470</seriesid>
+         //<language>en</language>
+         //<SeriesName>Star Trek: The Next Generation</SeriesName>
+         //<banner>graphical/71470-g.jpg</banner>
+         //<Overview>A century after Captain Kirk's five year mission, the next generation of Starfleet officers begins their journey aboard the new flagship of the Federation.
+         //
+         //Commanded by Captain Jean-Luc Picard the Galaxy class starship Enterprise NCC-1701-D will seek out new life and new civilizations - to boldly go where no one has gone before.</Overview>
+         //<FirstAired>1987-09-28</FirstAired>
+         //<Network>Syndicated</Network>
+         //<IMDB_ID>tt0092455</IMDB_ID>
+         //<zap2it_id>EP00003986</zap2it_id>
+         //<id>71470</id>
+         //</Series>
+         //</Data>";
 
          var xmlDoc = new XmlDocument();
          xmlDoc.LoadXml( seriesData );
 
          var seriesNodes = xmlDoc.SelectNodes( "Data/Series" );
 
-         if ( seriesNodes.Count > 1 )
+         if ( seriesNodes.Count == 0 )
          {
-            var seriesList = new List<string>();
+            throw new NoSeriesFoundException( String.Format( "No series found that matches name \"{0}\".", seriesName ) );
+         }
+         else if ( seriesNodes.Count > 1 )
+         {
+            var seriesList = new List<Series>();
 
             foreach ( XmlNode seriesNode in seriesNodes )
             {
                var seriesNameNode = seriesNode.SelectSingleNode( "SeriesName" );
+               var seriesIdNode = seriesNode.SelectSingleNode( "id" );
 
-               seriesList.Add( seriesNameNode.InnerText );
+               seriesList.Add( new Series() { Name = seriesNameNode.InnerText, SeriesId = Int32.Parse( seriesIdNode.InnerText ) } );
             }
 
             throw new MultipleSeriesReturnedException( seriesList );
@@ -166,7 +171,21 @@ namespace Tvdb2File
          //using ( var zipData = new FileStream( "C:\\Temp\\xml.zip", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read ) )
          using ( var zipData = new MemoryStream() )
          {
-            this.GetHttpBinaryData( new Uri( uriString ), zipData );
+            try
+            {
+               this.GetHttpBinaryData( new Uri( uriString ), zipData );
+            }
+            catch ( WebException ex )
+            {
+               if ( ( (HttpWebResponse) ex.Response ).StatusCode == HttpStatusCode.NotFound )
+               {
+                  throw new NoSeriesFoundException( String.Format( "No series with ID \"{0}\" could be found.", seriesId ), ex );
+               }
+               else
+               {
+                  throw ex;
+               }
+            }
 
             zipData.Seek( 0, SeekOrigin.Begin );
 

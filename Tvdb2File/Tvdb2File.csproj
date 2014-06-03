@@ -59,8 +59,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SeasonPath.cs" />
     <Compile Include="SeasonPathInfo.cs" />
+    <Compile Include="Series.cs" />
     <Compile Include="SeriesEpisodeDataParser.cs" />
-    <Compile Include="SqliteClient.cs" />
     <Compile Include="SqliteDatabase.cs" />
     <Compile Include="TvdbClient.cs" />
     <Compile Include="XmlHelper.cs" />

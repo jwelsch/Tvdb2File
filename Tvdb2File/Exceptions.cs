@@ -12,13 +12,60 @@ using System.Collections.ObjectModel;
 
 namespace Tvdb2File
 {
+   #region Tvdb2FileException
+
+   /// <summary>
+   /// Base class for exceptions defined by Tvdb2File.
+   /// </summary>
+   [Serializable]
+   public class Tvdb2FileException : Exception
+   {
+      /// <summary>
+      /// Constructs an object of type Tvdb2FileException.
+      /// </summary>
+      public Tvdb2FileException()
+      {
+      }
+
+      /// <summary>
+      /// Constructs an object of type Tvdb2FileException.
+      /// </summary>
+      /// <param name="message">The message associated with the exception.</param>
+      public Tvdb2FileException( string message )
+         : this( message, null )
+      {
+      }
+
+      /// <summary>
+      /// Constructs an object of type Tvdb2FileException.
+      /// </summary>
+      /// <param name="message">The message associated with the exception.</param>
+      /// <param name="innerException">Another exception associated with the Tvdb2FileException.</param>
+      public Tvdb2FileException( string message, Exception innerException )
+         : base( message, innerException )
+      {
+      }
+
+      /// <summary>
+      /// Constructs a Tvdb2FileException object.
+      /// </summary>
+      /// <param name="info">The serialization information.</param>
+      /// <param name="context">The streaming context.</param>
+      protected Tvdb2FileException( System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context )
+         : base( info, context )
+      {
+      }
+   }
+
+   #endregion
+
    #region CommandLineException
 
    /// <summary>
    /// Thrown when there is an error with the command line arguments.
    /// </summary>
    [Serializable]
-   public class CommandLineException : Exception
+   public class CommandLineException : Tvdb2FileException
    {
       /// <summary>
       /// Constructs an object of type CommandLineException.
@@ -63,10 +110,10 @@ namespace Tvdb2File
    #region UnexpectedEpisodeCountException
 
    /// <summary>
-   /// Thrown when there is an error with the command line arguments.
+   /// Thrown when the number of episodes returned from thetvdb.com does match the number of MP4 files in the season directory.
    /// </summary>
    [Serializable]
-   public class UnexpectedEpisodeCountException : Exception
+   public class UnexpectedEpisodeCountException : Tvdb2FileException
    {
       /// <summary>
       /// Constructs an object of type UnexpectedEpisodeCountException.
@@ -111,18 +158,18 @@ namespace Tvdb2File
    #region MultipleSeriesReturnedException
 
    /// <summary>
-   /// Thrown when there is an error with the command line arguments.
+   /// Thrown when there is more than one series returned.
    /// </summary>
    [Serializable]
-   public class MultipleSeriesReturnedException : Exception
+   public class MultipleSeriesReturnedException : Tvdb2FileException
    {
-      public ReadOnlyCollection<string> SeriesReturned;
+      public ReadOnlyCollection<Series> SeriesReturned;
 
       /// <summary>
       /// Constructs an object of type MultipleSeriesReturnedException.
       /// </summary>
       /// <param name="seriesReturned">A list of the names of series that were returned.</param>
-      public MultipleSeriesReturnedException( IList<string> seriesReturned )
+      public MultipleSeriesReturnedException( IList<Series> seriesReturned )
          : this( String.Empty, seriesReturned, null )
       {
       }
@@ -132,7 +179,7 @@ namespace Tvdb2File
       /// </summary>
       /// <param name="message">The message associated with the exception.</param>
       /// <param name="seriesReturned">A list of the names of series that were returned.</param>
-      public MultipleSeriesReturnedException( string message, IList<string> seriesReturned )
+      public MultipleSeriesReturnedException( string message, IList<Series> seriesReturned )
          : this( message, seriesReturned, null )
       {
       }
@@ -143,10 +190,10 @@ namespace Tvdb2File
       /// <param name="message">The message associated with the exception.</param>
       /// <param name="seriesReturned">A list of the names of series that were returned.</param>
       /// <param name="innerException">Another exception associated with the MultipleSeriesReturnedException.</param>
-      public MultipleSeriesReturnedException( string message, IList<string> seriesReturned, Exception innerException )
+      public MultipleSeriesReturnedException( string message, IList<Series> seriesReturned, Exception innerException )
          : base( message, innerException )
       {
-         this.SeriesReturned = new ReadOnlyCollection<string>( seriesReturned );
+         this.SeriesReturned = new ReadOnlyCollection<Series>( seriesReturned );
       }
 
       /// <summary>
@@ -162,13 +209,109 @@ namespace Tvdb2File
 
    #endregion
 
+   #region NoSeriesFoundException
+
+   /// <summary>
+   /// Thrown when no series is found.
+   /// </summary>
+   [Serializable]
+   public class NoSeriesFoundException : Tvdb2FileException
+   {
+      /// <summary>
+      /// Constructs an object of type NoSeriesFoundException.
+      /// </summary>
+      public NoSeriesFoundException()
+         : this( string.Empty, null )
+      {
+      }
+
+      /// <summary>
+      /// Constructs an object of type NoSeriesFoundException.
+      /// </summary>
+      /// <param name="message">The message associated with the exception.</param>
+      public NoSeriesFoundException( string message )
+         : this( message, null )
+      {
+      }
+
+      /// <summary>
+      /// Constructs an object of type NoSeriesFoundException.
+      /// </summary>
+      /// <param name="message">The message associated with the exception.</param>
+      /// <param name="innerException">Another exception associated with the NoSeriesFoundException.</param>
+      public NoSeriesFoundException( string message, Exception innerException )
+         : base( message, innerException )
+      {
+      }
+
+      /// <summary>
+      /// Constructs a NoSeriesFoundException object.
+      /// </summary>
+      /// <param name="info">The serialization information.</param>
+      /// <param name="context">The streaming context.</param>
+      protected NoSeriesFoundException( System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context )
+         : base( info, context )
+      {
+      }
+   }
+
+   #endregion
+
+   #region NoEpisodesFoundException
+
+   /// <summary>
+   /// Thrown when no episodes are found.
+   /// </summary>
+   [Serializable]
+   public class NoEpisodesFoundException : Tvdb2FileException
+   {
+      /// <summary>
+      /// Constructs an object of type NoEpisodesFoundException.
+      /// </summary>
+      public NoEpisodesFoundException()
+         : this( string.Empty, null )
+      {
+      }
+
+      /// <summary>
+      /// Constructs an object of type NoEpisodesFoundException.
+      /// </summary>
+      /// <param name="message">The message associated with the exception.</param>
+      public NoEpisodesFoundException( string message )
+         : this( message, null )
+      {
+      }
+
+      /// <summary>
+      /// Constructs an object of type NoEpisodesFoundException.
+      /// </summary>
+      /// <param name="message">The message associated with the exception.</param>
+      /// <param name="innerException">Another exception associated with the NoEpisodesFoundException.</param>
+      public NoEpisodesFoundException( string message, Exception innerException )
+         : base( message, innerException )
+      {
+      }
+
+      /// <summary>
+      /// Constructs a NoEpisodesFoundException object.
+      /// </summary>
+      /// <param name="info">The serialization information.</param>
+      /// <param name="context">The streaming context.</param>
+      protected NoEpisodesFoundException( System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context )
+         : base( info, context )
+      {
+      }
+   }
+
+   #endregion
+
    #region XmlFormatException
 
    /// <summary>
-   /// Thrown when there is an error with the command line arguments.
+   /// Thrown when there is an error with the XML format.
    /// </summary>
    [Serializable]
-   public class XmlFormatException : Exception
+   public class XmlFormatException : Tvdb2FileException
    {
       /// <summary>
       /// Constructs an object of type XmlFormatException.

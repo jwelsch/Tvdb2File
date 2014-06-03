@@ -208,5 +208,43 @@ WHERE
 
          return episodes.ToArray();
       }
+
+      public Episode[] FindEpisodes( string seriesSearch, int seasonNumber )
+      {
+         var commandText =
+@"SELECT sn.Id, sn.Name
+FROM Series AS sn
+WHERE
+   sn.Name LIKE '$seriesName';";
+
+         var seriesList = new List<Series>();
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.Parameters.AddWithValue( "$seriesName", seriesSearch );
+
+            using ( var reader = command.ExecuteReader() )
+            {
+               while ( reader.Read() )
+               {
+                  var series = new Series();
+                  series.SeriesId = (int) reader["sn.Id"];
+                  series.Name = (string) reader["sn.Name"];
+                  seriesList.Add( series );
+               }
+            }
+         }
+
+         if ( seriesList.Count == 0 )
+         {
+            throw new NoSeriesFoundException( String.Format( "No series found that matches name \"{0}\".", seriesSearch ) );
+         }
+         else if ( seriesList.Count > 1 )
+         {
+            throw new MultipleSeriesReturnedException( seriesList );
+         }
+
+         return this.FindEpisodes( seriesList[0].SeriesId, seasonNumber );
+      }
    }
 }
