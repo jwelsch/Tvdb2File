@@ -4,7 +4,7 @@
 // <author>Justin Welsch</author>
 // </copyright>
 //////////////////////////////////////////////////////////////////////////////
-      
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -47,6 +47,8 @@ namespace Tvdb2File
        *     -seriesId: (Optional) ID of the series to use for episode naming.  This argument is mutually exclusive with -search.
        */
 
+      private const string LocalDatabasePath = "localStore.db3";
+
       static void Main( string[] args )
       {
          try
@@ -55,6 +57,8 @@ namespace Tvdb2File
             commandLine.Parse( args );
 
             var seasonPathInfo = new SeasonPathInfo( commandLine.SeasonPath );
+
+            //IList<Episode> episodeList = null;
 
             var tvdbClient = new TvdbClient();
             tvdbClient.LookingUpSeries += ( sender, e ) =>
@@ -140,18 +144,32 @@ namespace Tvdb2File
          }
       }
 
-      private static int GetSeasonNumber( string seasonDirectoryName )
+      private static IList<Episode> GetEpisodesLocally( int seriesId, int seasonNumber )
       {
-         var space = seasonDirectoryName.LastIndexOf( ' ' );
+         var episodeList = new List<Episode>();
 
-         if ( ( space < 0 ) || ( space >= seasonDirectoryName.Length ) )
+         using ( var database = new SqliteDatabase() )
          {
-            throw new ArgumentException( "The season directory name was not in the correct format." );
+            if ( File.Exists( Program.LocalDatabasePath ) )
+            {
+               database.Open( Program.LocalDatabasePath );
+            }
+            else
+            {
+               database.CreateTableSeries();
+               database.CreateTableSeason();
+               database.CreateTableEpisode();
+            }
          }
 
-         var seasonNumberString = seasonDirectoryName.Substring( space + 1 );
+         return episodeList;
+      }
 
-         return Int32.Parse( seasonNumberString );
+      private static IList<Episode> GetEpisodesRemotely( int seriesId, int seasonNumber )
+      {
+         var episodeList = new List<Episode>();
+
+         return episodeList;
       }
    }
 }
