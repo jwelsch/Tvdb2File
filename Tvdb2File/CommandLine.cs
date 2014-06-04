@@ -54,13 +54,21 @@ namespace Tvdb2File
 
       public static string Help()
       {
-         return @"Command line usage:
+         return String.Format( @"Tvdb2File version {0}
+
+Command line usage:
 
 Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-seriesId xxxxx]] [-forceUpdate]
-  -season: (Mandatory) Relative or absolute path to the directory containing the season to rename.
-  -search: (Optional) Terms to use to search for the series.  If not supplied, the name of the series directory will be used.  This argument is mutually exclusive with -seriesId.
-  -seriesId: (Optional) ID of the series to use for episode naming.  This argument is mutually exclusive with -search.
-  -forceUpdate: (Optional) Include to force an update of the local episode database from thetvdb.com.";
+  -season: (Mandatory) Relative or absolute path to the directory containing
+           the season to rename.
+  -search: (Optional) Terms to use to search for the series.  If not supplied,
+           the name of the series directory will be used.  This argument is
+           mutually exclusive with -seriesId.
+  -seriesId: (Optional) ID of the series to use for episode naming.  This
+             argument is mutually exclusive with -search.
+  -forceUpdate: (Optional) Include to force an update of the local episode
+                database from thetvdb.com."
+            , System.Reflection.Assembly.GetExecutingAssembly().GetName().Version );
       }
 
       public void Parse( string[] args )

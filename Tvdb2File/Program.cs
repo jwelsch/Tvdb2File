@@ -162,6 +162,7 @@ namespace Tvdb2File
             System.Diagnostics.Trace.WriteLine( ex );
             Console.WriteLine();
             Console.WriteLine( ex.Message );
+            Console.WriteLine();
             Console.WriteLine( CommandLine.Help() );
             Console.WriteLine();
          }
