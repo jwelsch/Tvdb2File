@@ -1,13 +1,11 @@
 TVDB2FILE ACKNOWLEDGEMENTS
 --------------------------
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 This software uses all of or portions of the following:
 
 -------------------------------------------------------------------------------
 
-System.Data.SQLite.
+System.Data.SQLite
 System.Data.SQLite is in the public domain.
 https://system.data.sqlite.org
 https://system.data.sqlite.org/index.html/doc/trunk/www/copyright.wiki
@@ -51,13 +49,3 @@ A "contributor" is any person that distributes its contribution under this licen
 (E) The software is licensed "as-is." You bear the risk of using it. The contributors give no express warranties, guarantees or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the contributors exclude the implied warranties of merchantability, fitness for a particular purpose and non-infringement.
 
 -------------------------------------------------------------------------------
-=======
-This software uses System.Data.SQLite.
-System.Data.SQLite is in the public domain.
-https://system.data.sqlite.org/index.html/doc/trunk/www/copyright.wiki
->>>>>>> b40e96e0eeeed2ab34d2058ac4e760658ee27a2d
-=======
-This software uses System.Data.SQLite.
-System.Data.SQLite is in the public domain.
-https://system.data.sqlite.org/index.html/doc/trunk/www/copyright.wiki
->>>>>>> b40e96e0eeeed2ab34d2058ac4e760658ee27a2d
