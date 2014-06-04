@@ -42,10 +42,11 @@ namespace Tvdb2File
        *            |- Season n
        * 
        * COMMAND LINE ARGUMENTS
-       *   Tvdb2File.exe -season "path to season" [[-search "series search term"]|[-seriesId xxxxx]]
+       *   Tvdb2File.exe -season "path to season" [[-search "series search term"]|[-seriesId xxxxx]] [-forceUpdate]
        *     -season: (Mandatory) Relative or absolute path to the directory containing the season to rename.
        *     -search: (Optional) Terms to use to search for the series.  If not supplied, the name of the series directory will be used.  This argument is mutually exclusive with -seriesId.
        *     -seriesId: (Optional) ID of the series to use for episode naming.  This argument is mutually exclusive with -search.
+       *     -forceUpdate: (Optional) Include to force an update of the local episode database from thetvdb.com.";
        */
 
       private const string LocalDatabasePath = "localStore.db3";
@@ -59,7 +60,16 @@ namespace Tvdb2File
 
             var seasonPathInfo = new SeasonPathInfo( commandLine.SeasonPath );
 
-            var episodeList = Program.GetEpisodesLocally( commandLine, seasonPathInfo );
+            IList<Episode> episodeList = null;
+
+            if ( commandLine.ForceUpdate )
+            {
+               Program.PurgeLocalData();
+            }
+            else
+            {
+               episodeList = Program.GetEpisodesLocally( commandLine, seasonPathInfo );
+            }
 
             if ( ( episodeList == null ) || ( episodeList.Count == 0 ) )
             {
@@ -315,6 +325,17 @@ namespace Tvdb2File
                   database.InsertEpisode( newEpisode );
                }
             }
+         }
+      }
+
+      private static void PurgeLocalData()
+      {
+         using ( var database = new SqliteDatabase() )
+         {
+            database.Open( Program.LocalDatabasePath );
+            database.DeleteAllEpisodes();
+            database.DeleteAllSeasons();
+            database.DeleteAllSeries();
          }
       }
    }

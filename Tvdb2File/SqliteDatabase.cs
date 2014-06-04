@@ -420,5 +420,41 @@ VALUES ( $id, $name, $number, $seriesId, $seasonId, $language );";
             command.ExecuteNonQuery();
          }
       }
+
+      public void DeleteAllEpisodes()
+      {
+         var commandText =
+@"DELETE FROM Episode
+WHERE Episode.Id;";
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.ExecuteNonQuery();
+         }
+      }
+
+      public void DeleteAllSeasons()
+      {
+         var commandText =
+@"DELETE FROM Season
+WHERE Season.Id;";
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.ExecuteNonQuery();
+         }
+      }
+
+      public void DeleteAllSeries()
+      {
+         var commandText =
+@"DELETE FROM Series
+WHERE Series.Id;";
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.ExecuteNonQuery();
+         }
+      }
    }
 }
