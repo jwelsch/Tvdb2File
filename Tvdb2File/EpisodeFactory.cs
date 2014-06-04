@@ -15,7 +15,7 @@ namespace Tvdb2File
    {
       public Episode Create( XmlReader xmlReader )
       {
-         var allRead = 63U;
+         var allRead = 127U;
          var infoRead = 0U;
          var episode = new Episode();
 
@@ -57,6 +57,12 @@ namespace Tvdb2File
                episode.SeriesId = Int32.Parse( xmlReader.Value );
                infoRead |= 32U;
             }
+            else if ( XmlHelper.CheckElement( xmlReader, "Language", XmlNodeType.Element, false ) )
+            {
+               xmlReader.Read();
+               episode.Language = xmlReader.Value;
+               infoRead |= 64U;
+            }
          }
 
          if ( infoRead != allRead )
@@ -83,9 +89,13 @@ namespace Tvdb2File
             {
                missing = "seasonid";
             }
-            else if ( !infoRead.BitFlagSet( 31U ) )
+            else if ( !infoRead.BitFlagSet( 32U ) )
             {
                missing = "seriesid";
+            }
+            else if ( !infoRead.BitFlagSet( 64U ) )
+            {
+               missing = "Language";
             }
 
             throw new XmlFormatException( String.Format( "Missing element \"{0}\" from episode XML.", missing ) );

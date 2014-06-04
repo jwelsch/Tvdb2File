@@ -43,6 +43,7 @@ namespace Tvdb2File
       public CommandLine()
       {
          this.SeriesSearchTerms = String.Empty;
+         this.SeriesId = CommandLine.NoSeriesId;
       }
 
       public static string Help()
@@ -58,6 +59,7 @@ Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-ser
       public void Parse( string[] args )
       {
          var state = ArgumentState.Label;
+         var seasonPathFound = false;
          var seriesSearchTermsFound = false;
          var seriesIdFound = false;
 
@@ -67,6 +69,7 @@ Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-ser
             {
                if ( String.Compare( args[i], "-season", true ) == 0 )
                {
+                  seasonPathFound = true;
                   state = ArgumentState.SeasonPath;
                }
                else if ( String.Compare( args[i], "-search", true ) == 0 )
@@ -128,6 +131,15 @@ Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-ser
             {
                throw new CommandLineException( String.Format( "Unknown argument state \"{0}\".", state ) );
             }
+         }
+
+         if ( !seasonPathFound )
+         {
+            throw new CommandLineException( "Missing the path to the season (\"-season\")." );
+         }
+         else if ( String.IsNullOrEmpty( this.SeasonPath ) )
+         {
+            throw new CommandLineException( "The season path was not specified." );
          }
       }
    }

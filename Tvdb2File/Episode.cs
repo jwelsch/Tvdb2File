@@ -11,19 +11,19 @@ namespace Tvdb2File
 {
    public class Episode
    {
-      public int EpisodeId
+      public Int64 EpisodeId
       {
          get;
          set;
       }
 
-      public int SeasonId
+      public Int64 SeasonId
       {
          get;
          set;
       }
 
-      public int SeriesId
+      public Int64 SeriesId
       {
          get;
          set;
@@ -42,6 +42,12 @@ namespace Tvdb2File
       }
 
       public string Name
+      {
+         get;
+         set;
+      }
+
+      public string Language
       {
          get;
          set;

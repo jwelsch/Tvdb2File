@@ -86,8 +86,10 @@ namespace Tvdb2File
 
       public void CreateTableSeries()
       {
-         var commandText = @"CREATE TABLE IF NOT EXISTS Series (
-Id INTEGER PRIMARY KEY NOT NULL
+         var commandText =
+@"CREATE TABLE IF NOT EXISTS Series
+(
+Id INTEGER UNIQUE PRIMARY KEY NOT NULL
 , Name TEXT NOT NULL
 )";
 
@@ -99,10 +101,11 @@ Id INTEGER PRIMARY KEY NOT NULL
 
       public void CreateTableSeason()
       {
-         var commandText = @"CREATE TABLE IF NOT EXISTS Season (
-Id INTEGER PRIMARY KEY NOT NULL
-, Name TEXT NOT NULL
-, Number INTEGER NOT NULL
+         var commandText =
+@"CREATE TABLE IF NOT EXISTS Season
+(
+Id INTEGER UNIQUE PRIMARY KEY NOT NULL
+, Number INT NOT NULL
 , SeriesId INTEGER NOT NULL
 , FOREIGN KEY( SeriesId ) REFERENCES Series( Id )
 )";
@@ -115,10 +118,12 @@ Id INTEGER PRIMARY KEY NOT NULL
 
       public void CreateTableEpisode()
       {
-         var commandText = @"CREATE TABLE IF NOT EXISTS Episode (
-Id INTEGER PRIMARY KEY NOT NULL
+         var commandText =
+@"CREATE TABLE IF NOT EXISTS Episode
+(
+Id INTEGER UNIQUE PRIMARY KEY NOT NULL
 , Name TEXT NOT NULL
-, Number INTEGER NOT NULL
+, Number INT NOT NULL
 , SeriesId INTEGER NOT NULL
 , SeasonId INTEGER NOT NULL
 , Language TEXT NOT NULL
@@ -142,7 +147,73 @@ Id INTEGER PRIMARY KEY NOT NULL
          }
       }
 
-      public Episode FindEpisode( int episodeId )
+      public Series FindSeries( string seriesSearch )
+      {
+         var commandText =
+@"SELECT sn.Id, sn.Name
+FROM Series AS sn
+WHERE
+   sn.Name LIKE '$seriesName';";
+
+         var seriesList = new List<Series>();
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.Parameters.AddWithValue( "$seriesName", seriesSearch );
+
+            using ( var reader = command.ExecuteReader() )
+            {
+               while ( reader.Read() )
+               {
+                  var series = new Series();
+                  series.SeriesId = (Int64) reader["Id"];
+                  series.Name = (string) reader["Name"];
+                  seriesList.Add( series );
+               }
+            }
+         }
+
+         if ( seriesList.Count == 0 )
+         {
+            throw new NoSeriesFoundException( String.Format( "No series found that matches name \"{0}\".", seriesSearch ) );
+         }
+         else if ( seriesList.Count > 1 )
+         {
+            throw new MultipleSeriesReturnedException( seriesList );
+         }
+
+         return seriesList[0];
+      }
+
+      public Series FindSeries( Int64 seriesId )
+      {
+         var commandText =
+@"SELECT sn.Id, sn.Name
+FROM Series AS sn
+WHERE
+   sn.Id = $seriesId;";
+
+         Series series = null;
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.Parameters.AddWithValue( "$seriesId", seriesId );
+
+            using ( var reader = command.ExecuteReader() )
+            {
+               if ( reader.Read() )
+               {
+                  series = new Series();
+                  series.SeriesId = (Int64) reader["Id"];
+                  series.Name = (string) reader["Name"];
+               }
+            }
+         }
+
+         return series;
+      }
+
+      public Episode FindEpisode( Int64 episodeId )
       {
          Episode episode = null;
          var commandText =
@@ -161,12 +232,12 @@ WHERE
                if ( reader.Read() )
                {
                   episode = new Episode();
-                  episode.EpisodeId = (int) reader["ep.Id"];
+                  episode.EpisodeId = (Int64) reader["ep.Id"];
                   episode.Name = (string) reader["ep.Name"];
                   episode.EpisodeNumber = (int) reader["ep.Number"];
                   episode.SeasonNumber = (int) reader["sn.Number"];
-                  episode.SeriesId = (int) reader["ep.SeriesId"];
-                  episode.SeasonId = (int) reader["ep.SeasonId"];
+                  episode.SeriesId = (Int64) reader["ep.SeriesId"];
+                  episode.SeasonId = (Int64) reader["ep.SeasonId"];
                }
             }
          }
@@ -174,7 +245,46 @@ WHERE
          return episode;
       }
 
-      public Episode[] FindEpisodes( int seriesId, int seasonNumber )
+      public Episode FindEpisode( Int64 seriesId, int seasonNumber, int episodeNumber )
+      {
+         Episode episode = null;
+         var commandText =
+@"SELECT ep.Id, ep.Name, ep.Number, ep.Language, sn.Number, ep.SeriesId, ep.SeasonId
+FROM Episode AS ep
+LEFT JOIN Season AS sn ON ep.SeasonId = sn.Id
+WHERE
+   ep.SeriesId = $seriesId
+   AND sn.Number = $seasonNumber
+   AND ep.Number = $episodeNumber;";
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.Parameters.AddWithValue( "$seriesId", seriesId );
+            command.Parameters.AddWithValue( "$seasonNumber", seasonNumber );
+            command.Parameters.AddWithValue( "$episodeNumber", episodeNumber );
+
+            using ( var reader = command.ExecuteReader() )
+            {
+               if ( reader.Read() )
+               {
+                  episode = new Episode()
+                  {
+                     EpisodeId = (Int64) reader.GetValue( 0 ),
+                     Name = (string) reader.GetValue( 1 ),
+                     EpisodeNumber = (int) reader.GetValue( 2 ),
+                     Language = (string) reader.GetValue( 3 ),
+                     SeasonNumber = (int) reader.GetValue( 4 ),
+                     SeriesId = (Int64) reader.GetValue( 5 ),
+                     SeasonId = (Int64) reader.GetValue( 6 )
+                  };
+               }
+            }
+         }
+
+         return episode;
+      }
+
+      public IList<Episode> FindEpisodes( Int64 seriesId, int seasonNumber )
       {
          var episodes = new List<Episode>();
          var commandText =
@@ -195,18 +305,120 @@ WHERE
                while ( reader.Read() )
                {
                   var episode = new Episode();
-                  episode.EpisodeId = (int) reader["ep.Id"];
-                  episode.Name = (string) reader["ep.Name"];
-                  episode.EpisodeNumber = (int) reader["ep.Number"];
-                  episode.SeasonNumber = (int) reader["sn.Number"];
-                  episode.SeriesId = (int) reader["ep.SeriesId"];
-                  episode.SeasonId = (int) reader["ep.SeasonId"];
+                  //for ( var i = 0; i < reader.FieldCount; i++ )
+                  //{
+                  //   var name = reader.GetName( i );
+                  //   var type = reader.GetFieldType( i );
+                  //}
+                  episode = new Episode()
+                  {
+                     EpisodeId = (Int64) reader.GetValue( 0 ),
+                     Name = (string) reader.GetValue( 1 ),
+                     EpisodeNumber = (int) reader.GetValue( 2 ),
+                     Language = (string) reader.GetValue( 3 ),
+                     SeasonNumber = (int) reader.GetValue( 4 ),
+                     SeriesId = (Int64) reader.GetValue( 5 ),
+                     SeasonId = (Int64) reader.GetValue( 6 )
+                  };
                   episodes.Add( episode );
                }
             }
          }
 
-         return episodes.ToArray();
+         return episodes;
+      }
+
+      public IList<Episode> FindEpisodes( string seriesSearch, int seasonNumber )
+      {
+         var series = this.FindSeries( seriesSearch );
+
+         return this.FindEpisodes( series.SeriesId, seasonNumber );
+      }
+
+      public Season FindSeason( Int64 seriesId, Int64 seasonId )
+      {
+         var commandText =
+@"SELECT sn.Id, sn.Number, sn.SeriesId
+FROM Season AS sn
+WHERE
+   sn.Id = $seasonId
+   AND sn.SeriesId = $seriesId";
+
+         Season season = null;
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.Parameters.AddWithValue( "$seasonId", seasonId );
+            command.Parameters.AddWithValue( "$seriesId", seriesId );
+
+            using ( var reader = command.ExecuteReader() )
+            {
+               if ( reader.Read() )
+               {
+                  season = new Season()
+                  {
+                     SeasonId = (Int64) reader["Id"],
+                     SeasonNumber = (int) reader["Number"],
+                     SeriesId = (Int64) reader["SeriesId"]
+                  };
+               }
+            }
+         }
+
+         return season;
+      }
+
+      public void InsertSeries( Series series )
+      {
+         var commandText =
+@"INSERT INTO Series
+( Id, Name )
+VALUES ( $id, $name );";
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.Parameters.AddWithValue( "$id", series.SeriesId );
+            command.Parameters.AddWithValue( "$name", series.Name );
+
+            command.ExecuteNonQuery();
+         }
+      }
+
+      public void InsertSeason( Season season )
+      {
+         var commandText =
+@"INSERT INTO Season
+( Id, Number, SeriesId )
+VALUES ( $id, $seasonNumber, $seriesId );";
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.Parameters.AddWithValue( "$id", season.SeasonId );
+            command.Parameters.AddWithValue( "$seasonNumber", season.SeasonNumber );
+            command.Parameters.AddWithValue( "$seriesId", season.SeriesId );
+
+            command.ExecuteNonQuery();
+         }
+      }
+
+      public void InsertEpisode( Episode episode )
+      {
+         var commandText =
+@"INSERT INTO Episode
+( Id, Name, Number, SeriesId, SeasonId, Language )
+VALUES ( $id, $name, $number, $seriesId, $seasonId, $language );";
+
+         using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
+         {
+            command.Parameters.AddWithValue( "$id", episode.EpisodeId );
+            command.Parameters.AddWithValue( "$name", episode.Name );
+            command.Parameters.AddWithValue( "$number", episode.EpisodeNumber );
+            command.Parameters.AddWithValue( "$seriesId", episode.SeriesId );
+            command.Parameters.AddWithValue( "$seasonId", episode.SeasonId );
+            command.Parameters.AddWithValue( "$language", episode.Language );
+
+            command.ExecuteNonQuery();
+         }
       }
    }
 }
