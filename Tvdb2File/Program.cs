@@ -61,17 +61,27 @@ namespace Tvdb2File
 
             var episodeList = Program.GetEpisodesLocally( commandLine, seasonPathInfo );
 
-            if ( ( episodeList == null ) || ( episodeList.Length == 0 ) )
+            if ( ( episodeList == null ) || ( episodeList.Count == 0 ) )
             {
                episodeList = Program.GetEpisodesRemotely( commandLine, seasonPathInfo );
 
-               if ( ( episodeList != null ) && ( episodeList.Length > 0 ) )
+               if ( ( episodeList != null ) && ( episodeList.Count > 0 ) )
                {
+                  Console.WriteLine( "Storing episode information locally." );
                   Program.StoreEpisodesLocally( commandLine, seasonPathInfo, episodeList );
+                  Console.WriteLine( "Successfully stored episode information locally." );
+               }
+
+               for ( var i = episodeList.Count - 1; i >= 0; i-- )
+               {
+                  if ( episodeList[i].SeasonNumber != seasonPathInfo.SeasonNumber )
+                  {
+                     episodeList.RemoveAt( i );
+                  }
                }
             }
 
-            if ( ( episodeList == null ) || ( episodeList.Length == 0 ) )
+            if ( ( episodeList == null ) || ( episodeList.Count == 0 ) )
             {
                throw new NoEpisodesFoundException( String.Format( "No episodes found for \"{0}\" Season {1}.", seasonPathInfo.SeriesName, seasonPathInfo.SeasonNumber ) );
             }
@@ -87,7 +97,9 @@ namespace Tvdb2File
 
             fileRenamer.RenameSeasonEpisodeFiles( seasonPathInfo.SeasonPath, episodeList );
 
+            Console.WriteLine();
             Console.WriteLine( "Successfully finished renaming local files." );
+            Console.WriteLine();
          }
          catch ( MultipleSeriesReturnedException ex )
          {
@@ -159,7 +171,7 @@ namespace Tvdb2File
          }
       }
 
-      private static Episode[] GetEpisodesLocally( CommandLine commandLine, SeasonPathInfo seasonPathInfo )
+      private static IList<Episode> GetEpisodesLocally( CommandLine commandLine, SeasonPathInfo seasonPathInfo )
       {
          var episodeList = new List<Episode>();
 
@@ -188,10 +200,10 @@ namespace Tvdb2File
             }
          }
 
-         return episodeList.ToArray();
+         return episodeList;
       }
 
-      private static Episode[] GetEpisodesRemotely( CommandLine commandLine, SeasonPathInfo seasonPathInfo )
+      private static IList<Episode> GetEpisodesRemotely( CommandLine commandLine, SeasonPathInfo seasonPathInfo )
       {
          var episodeList = new List<Episode>();
 
@@ -230,13 +242,10 @@ namespace Tvdb2File
 
          foreach ( var episode in allEpisodeList )
          {
-            if ( episode.SeasonNumber == seasonPathInfo.SeasonNumber )
-            {
-               episodeList.Add( episode );
-            }
+            episodeList.Add( episode );
          }
          
-         return episodeList.ToArray();
+         return episodeList;
       }
 
       private static void StoreEpisodesLocally( CommandLine commandLine, SeasonPathInfo seasonPathInfo, IList<Episode> episodeList )
@@ -244,6 +253,68 @@ namespace Tvdb2File
          using ( var database = new SqliteDatabase() )
          {
             database.Open( Program.LocalDatabasePath );
+
+            var seriesCache = new Dictionary<Int64, Series>();
+            var seasonCache = new Dictionary<Int64, Season>();
+
+            Series series = null;
+            Season season = null;
+
+            foreach ( var newEpisode in episodeList )
+            {
+               var lookUpEpisode = true;
+
+               if ( !seriesCache.TryGetValue( newEpisode.SeriesId, out series ) )
+               {
+                  series = database.FindSeries( newEpisode.SeriesId );
+
+                  if ( series == null )
+                  {
+                     series = new Series()
+                     {
+                        Name = seasonPathInfo.SeriesName,
+                        SeriesId = newEpisode.SeriesId
+                     };
+
+                     database.InsertSeries( series );
+                     lookUpEpisode = false;
+                  }
+
+                  seriesCache.Add( series.SeriesId, series );
+               }
+
+               if ( !seasonCache.TryGetValue( newEpisode.SeasonId, out season ) )
+               {
+                  season = database.FindSeason( newEpisode.SeriesId, newEpisode.SeasonId );
+
+                  if ( season == null )
+                  {
+                     season = new Season()
+                     {
+                        SeasonId = newEpisode.SeasonId,
+                        SeasonNumber = newEpisode.SeasonNumber,
+                        SeriesId = newEpisode.SeriesId
+                     };
+
+                     database.InsertSeason( season );
+                     lookUpEpisode = false;
+                  }
+
+                  seasonCache.Add( season.SeasonId, season );
+               }
+
+               Episode storedEpisode = null;
+
+               if ( lookUpEpisode )
+               {
+                  storedEpisode = database.FindEpisode( series.SeriesId, season.SeasonNumber, newEpisode.EpisodeNumber );
+               }
+
+               if ( storedEpisode == null )
+               {
+                  database.InsertEpisode( newEpisode );
+               }
+            }
          }
       }
    }

@@ -11,7 +11,7 @@ namespace Tvdb2File
 {
    public class Series
    {
-      public int SeriesId
+      public Int64 SeriesId
       {
          get;
          set;

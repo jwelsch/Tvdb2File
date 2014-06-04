@@ -97,23 +97,6 @@ namespace Tvdb2File
 
          var uriString = String.Format( @"http://thetvdb.com/api/GetSeries.php?seriesname={0}&language={1}", seriesName, language );
          var seriesData = this.GetHttpStringData( new Uri( uriString ) );
-         //         var seriesData = @"<?xml version=""1.0"" encoding=""UTF-8"" ?>
-         //<Data>
-         //<Series>
-         //<seriesid>71470</seriesid>
-         //<language>en</language>
-         //<SeriesName>Star Trek: The Next Generation</SeriesName>
-         //<banner>graphical/71470-g.jpg</banner>
-         //<Overview>A century after Captain Kirk's five year mission, the next generation of Starfleet officers begins their journey aboard the new flagship of the Federation.
-         //
-         //Commanded by Captain Jean-Luc Picard the Galaxy class starship Enterprise NCC-1701-D will seek out new life and new civilizations - to boldly go where no one has gone before.</Overview>
-         //<FirstAired>1987-09-28</FirstAired>
-         //<Network>Syndicated</Network>
-         //<IMDB_ID>tt0092455</IMDB_ID>
-         //<zap2it_id>EP00003986</zap2it_id>
-         //<id>71470</id>
-         //</Series>
-         //</Data>";
 
          var xmlDoc = new XmlDocument();
          xmlDoc.LoadXml( seriesData );
