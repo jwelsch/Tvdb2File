@@ -153,7 +153,7 @@ Id INTEGER UNIQUE PRIMARY KEY NOT NULL
 @"SELECT sn.Id, sn.Name
 FROM Series AS sn
 WHERE
-   sn.Name LIKE '$seriesName';";
+   (sn.Name LIKE $seriesName);";
 
          var seriesList = new List<Series>();
 
