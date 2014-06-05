@@ -107,7 +107,6 @@ namespace Tvdb2File
 
             fileRenamer.RenameSeasonEpisodeFiles( seasonPathInfo.SeasonPath, episodeList );
 
-            Console.WriteLine();
             Console.WriteLine( "Successfully finished renaming local files." );
             Console.WriteLine();
          }
@@ -269,6 +268,8 @@ namespace Tvdb2File
 
       private static void StoreEpisodesLocally( CommandLine commandLine, SeasonPathInfo seasonPathInfo, IList<Episode> episodeList )
       {
+         var count = 0;
+
          using ( var database = new SqliteDatabase() )
          {
             database.Open( Program.LocalDatabasePath );
@@ -332,9 +333,18 @@ namespace Tvdb2File
                if ( storedEpisode == null )
                {
                   database.InsertEpisode( newEpisode );
+
+                  count++;
+
+                  if ( count % 10 == 0 )
+                  {
+                     Console.Write( String.Format( "\rAdded {0} episodes to local store.", count ) );
+                  }
                }
             }
          }
+
+         Console.WriteLine( String.Format( "\rAdded {0} episodes to local store.", count ) );
       }
 
       private static void PurgeLocalData()
