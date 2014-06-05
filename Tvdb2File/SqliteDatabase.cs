@@ -175,9 +175,10 @@ WHERE
 
          if ( seriesList.Count == 0 )
          {
-            throw new NoSeriesFoundException( String.Format( "No series found that matches name \"{0}\".", seriesSearch ) );
+            return null;
          }
-         else if ( seriesList.Count > 1 )
+         else
+         if ( seriesList.Count > 1 )
          {
             throw new MultipleSeriesReturnedException( seriesList );
          }
@@ -304,13 +305,12 @@ WHERE
             {
                while ( reader.Read() )
                {
-                  var episode = new Episode();
                   //for ( var i = 0; i < reader.FieldCount; i++ )
                   //{
                   //   var name = reader.GetName( i );
                   //   var type = reader.GetFieldType( i );
                   //}
-                  episode = new Episode()
+                  var episode = new Episode()
                   {
                      EpisodeId = (Int64) reader.GetValue( 0 ),
                      Name = (string) reader.GetValue( 1 ),
@@ -331,6 +331,11 @@ WHERE
       public IList<Episode> FindEpisodes( string seriesSearch, int seasonNumber )
       {
          var series = this.FindSeries( seriesSearch );
+
+         if ( series == null )
+         {
+            return null;
+         }
 
          return this.FindEpisodes( series.SeriesId, seasonNumber );
       }

@@ -195,11 +195,19 @@ namespace Tvdb2File
                if ( commandLine.SeriesId == CommandLine.NoSeriesId )
                {
                   var searchTerms = ( !String.IsNullOrEmpty( commandLine.SeriesSearchTerms ) ) ? commandLine.SeriesSearchTerms : seasonPathInfo.SeriesName;
-                  episodeList.AddRange( database.FindEpisodes( searchTerms, seasonPathInfo.SeasonNumber ) );
+                  var episodes = database.FindEpisodes( searchTerms, seasonPathInfo.SeasonNumber );
+
+                  if ( episodes == null )
+                  {
+                     return null;
+                  }
+
+                  episodeList.AddRange( episodes );
                }
                else
                {
-                  episodeList.AddRange( database.FindEpisodes( commandLine.SeriesId, seasonPathInfo.SeasonNumber ) );
+                  var episodes = database.FindEpisodes( commandLine.SeriesId, seasonPathInfo.SeasonNumber );
+                  episodeList.AddRange( episodes );
                }
             }
             else
