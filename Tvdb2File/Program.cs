@@ -190,18 +190,17 @@ namespace Tvdb2File
             if ( File.Exists( Program.LocalDatabasePath ) )
             {
                database.Open( Program.LocalDatabasePath );
+               database.BeginTransaction();
 
                if ( commandLine.SeriesId == CommandLine.NoSeriesId )
                {
                   var searchTerms = ( !String.IsNullOrEmpty( commandLine.SeriesSearchTerms ) ) ? commandLine.SeriesSearchTerms : seasonPathInfo.SeriesName;
                   var episodes = database.FindEpisodes( searchTerms, seasonPathInfo.SeasonNumber );
 
-                  if ( episodes == null )
+                  if ( episodes != null )
                   {
-                     return null;
+                     episodeList.AddRange( episodes );
                   }
-
-                  episodeList.AddRange( episodes );
                }
                else
                {
@@ -216,6 +215,8 @@ namespace Tvdb2File
                database.CreateTableSeason();
                database.CreateTableEpisode();
             }
+
+            database.EndTransaction();
          }
 
          return episodeList;
@@ -273,6 +274,7 @@ namespace Tvdb2File
          using ( var database = new SqliteDatabase() )
          {
             database.Open( Program.LocalDatabasePath );
+            database.BeginTransaction();
 
             var seriesCache = new Dictionary<Int64, Series>();
             var seasonCache = new Dictionary<Int64, Season>();
@@ -342,6 +344,8 @@ namespace Tvdb2File
                   }
                }
             }
+
+            database.EndTransaction();
          }
 
          Console.WriteLine( String.Format( "\rAdded {0} episodes to local store.", count ) );
