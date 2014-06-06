@@ -17,14 +17,37 @@ namespace Tvdb2File
       private SQLiteConnection connection;
       private SQLiteTransaction transaction;
 
+      public string DatabasePath
+      {
+         get;
+         set;
+      }
+
       public SqliteDatabase()
       {
       }
 
-      public void Open( string sqlitePath )
+      public void Open( LocalStoragePath sqlitePath )
       {
-         this.connection = new SQLiteConnection( String.Format( "Data Source=\"{0}\";", sqlitePath ) );
-         this.connection.Open();
+         try
+         {
+            this.connection = new SQLiteConnection( String.Format( "Data Source=\"{0}\";", sqlitePath.Default ) );
+            this.connection.Open();
+            this.DatabasePath = sqlitePath.Default;
+         }
+         catch ( SQLiteException ex )
+         {
+            if ( ex.ErrorCode == SQLiteErrorCode.CantOpen )
+            {
+               this.connection = new SQLiteConnection( String.Format( "Data Source=\"{0}\";", sqlitePath.AppData ) );
+               this.connection.Open();
+               this.DatabasePath = sqlitePath.AppData;
+            }
+            else
+            {
+               throw ex;
+            }
+         }
       }
 
       public void Close()

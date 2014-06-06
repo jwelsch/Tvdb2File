@@ -49,7 +49,7 @@ namespace Tvdb2File
        *     -forceUpdate: (Optional) Include to force an update of the local episode database from thetvdb.com.";
        */
 
-      private const string LocalDatabasePath = "localStore.db3";
+      private const string LocalDatabasePath = @"C:\Program Files\Tvdb2File\localStore.db3";
 
       static void Main( string[] args )
       {
@@ -187,9 +187,10 @@ namespace Tvdb2File
 
          using ( var database = new SqliteDatabase() )
          {
+            database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
+
             if ( File.Exists( Program.LocalDatabasePath ) )
             {
-               database.Open( Program.LocalDatabasePath );
                database.BeginTransaction();
 
                if ( commandLine.SeriesId == CommandLine.NoSeriesId )
@@ -210,7 +211,6 @@ namespace Tvdb2File
             }
             else
             {
-               database.Open( Program.LocalDatabasePath );
                database.CreateTableSeries();
                database.CreateTableSeason();
                database.CreateTableEpisode();
@@ -273,7 +273,7 @@ namespace Tvdb2File
 
          using ( var database = new SqliteDatabase() )
          {
-            database.Open( Program.LocalDatabasePath );
+            database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
             database.BeginTransaction();
 
             var seriesCache = new Dictionary<Int64, Series>();
@@ -355,7 +355,7 @@ namespace Tvdb2File
       {
          using ( var database = new SqliteDatabase() )
          {
-            database.Open( Program.LocalDatabasePath );
+            database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
             database.DeleteAllEpisodes();
             database.DeleteAllSeasons();
             database.DeleteAllSeries();
