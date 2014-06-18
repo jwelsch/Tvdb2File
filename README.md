@@ -38,7 +38,7 @@ This is an example of the structure of the file system containing series, season
 # Command Line Arguments
 
 ```
-Tvdb2File.exe -season "path to season" [[-search "series search term"]|[-seriesId xxxxx]] -forceUpdate
+Tvdb2File.exe -season "path to season" [[-search "series search term"]|[-seriesId xxxxx]] [-forceUpdate] [-dryRun]
   -season: (Mandatory) Relative or absolute path to the directory containing the season to rename.
   -search: (Optional) Terms to use to search for the series.  If not supplied, the name of the series directory will be used.  This argument is mutually exclusive with -seriesId.
   -seriesId: (Optional) ID of the series to use for episode naming.  This argument is mutually exclusive with -search.
