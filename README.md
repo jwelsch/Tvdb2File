@@ -42,4 +42,6 @@ Tvdb2File.exe -season "path to season" [[-search "series search term"]|[-seriesI
   -season: (Mandatory) Relative or absolute path to the directory containing the season to rename.
   -search: (Optional) Terms to use to search for the series.  If not supplied, the name of the series directory will be used.  This argument is mutually exclusive with -seriesId.
   -seriesId: (Optional) ID of the series to use for episode naming.  This argument is mutually exclusive with -search.
+  -forceUpdate: (Optional) Include to force an update of the local episode database from thetvdb.com.
+  -dryRun: (Optional) Does everything except do the actual file renaming.
 ```
