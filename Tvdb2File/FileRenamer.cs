@@ -42,7 +42,7 @@ namespace Tvdb2File
    {
       public event EventHandler<FileRenamedArgs> FileRenamed;
 
-      public int RenameSeasonEpisodeFiles( string seasonDirectoryPath, IList<Episode> episodeList )
+      public int RenameSeasonEpisodeFiles( string seasonDirectoryPath, IList<Episode> episodeList, bool dryRun )
       {
          var episodeFileNames = Directory.GetFiles( seasonDirectoryPath, "*.mp4", SearchOption.TopDirectoryOnly );
 
@@ -61,8 +61,11 @@ namespace Tvdb2File
             var targetFileNameWithExt = newFileNames[i] + Path.GetExtension( episodeFileNames[i] );
             var targetFilePath = Path.Combine( Path.GetDirectoryName( episodeFileNames[i] ), targetFileNameWithExt );
 
-            // TODO: Uncomment when done testing!!
-            File.Move( episodeFileNames[i], targetFilePath );
+            if ( !dryRun )
+            {
+               // TODO: Uncomment when done testing!!
+               File.Move( episodeFileNames[i], targetFilePath );
+            }
 
             if ( this.FileRenamed != null )
             {

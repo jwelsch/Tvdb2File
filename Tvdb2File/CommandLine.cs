@@ -46,6 +46,12 @@ namespace Tvdb2File
          private set;
       }
 
+      public bool DryRun
+      {
+         get;
+         private set;
+      }
+
       public CommandLine()
       {
          this.SeriesSearchTerms = String.Empty;
@@ -67,7 +73,8 @@ Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-ser
   -seriesId: (Optional) ID of the series to use for episode naming.  This
              argument is mutually exclusive with -search.
   -forceUpdate: (Optional) Include to force an update of the local episode
-                database from thetvdb.com."
+                database from thetvdb.com.
+  -dryRun: (Optional) Does everything except do the actual file renaming."
             , System.Reflection.Assembly.GetExecutingAssembly().GetName().Version );
       }
 
@@ -110,6 +117,10 @@ Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-ser
                else if ( String.Compare( args[i], "-forceUpdate", true ) == 0 )
                {
                   this.ForceUpdate = true;
+               }
+               else if ( String.Compare( args[i], "-dryRun", true ) == 0 )
+               {
+                  this.DryRun = true;
                }
                else
                {

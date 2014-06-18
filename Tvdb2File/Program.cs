@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 
 namespace Tvdb2File
@@ -46,15 +47,18 @@ namespace Tvdb2File
        *     -season: (Mandatory) Relative or absolute path to the directory containing the season to rename.
        *     -search: (Optional) Terms to use to search for the series.  If not supplied, the name of the series directory will be used.  This argument is mutually exclusive with -seriesId.
        *     -seriesId: (Optional) ID of the series to use for episode naming.  This argument is mutually exclusive with -search.
-       *     -forceUpdate: (Optional) Include to force an update of the local episode database from thetvdb.com.";
+       *     -forceUpdate: (Optional) Include to force an update of the local episode database from thetvdb.com.
+       *     -dryRun: (Optional) Does everything except do the actual file renaming.
        */
 
-      private const string LocalDatabasePath = @"C:\Program Files\Tvdb2File\localStore.db3";
+      private static string LocalDatabasePath = @"C:\Program Files\Tvdb2File\localStore.db3";
 
       static void Main( string[] args )
       {
          try
          {
+            Program.LocalDatabasePath = Path.Combine( Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location ), "localStore.db3" );
+
             var commandLine = new CommandLine();
             commandLine.Parse( args );
 
@@ -96,7 +100,7 @@ namespace Tvdb2File
                throw new NoEpisodesFoundException( String.Format( "No episodes found for \"{0}\" Season {1}.", seasonPathInfo.SeriesName, seasonPathInfo.SeasonNumber ) );
             }
 
-            Console.WriteLine( "Renaming local files in directory:" );
+            Console.WriteLine( String.Format( "Renaming local files in directory{0}:", commandLine.DryRun ? " (Dry Run)" : String.Empty ) );
             Console.WriteLine( String.Format( "  \"{0}\".", seasonPathInfo.SeasonPath ) );
 
             var fileRenamer = new FileRenamer();
@@ -105,9 +109,9 @@ namespace Tvdb2File
                   Console.WriteLine( String.Format( "    \"{0}\" -> \"{1}\"", e.OldName, e.NewName ) );
                };
 
-            fileRenamer.RenameSeasonEpisodeFiles( seasonPathInfo.SeasonPath, episodeList );
+            fileRenamer.RenameSeasonEpisodeFiles( seasonPathInfo.SeasonPath, episodeList, commandLine.DryRun );
 
-            Console.WriteLine( "Successfully finished renaming local files." );
+            Console.WriteLine( String.Format( "Successfully finished renaming local files{0}.", commandLine.DryRun ? " (Dry Run)" : String.Empty ) );
             Console.WriteLine();
          }
          catch ( MultipleSeriesReturnedException ex )
@@ -200,11 +204,13 @@ namespace Tvdb2File
 
                   if ( episodes != null )
                   {
+                     Console.WriteLine( "Loading episode information from local storage." );
                      episodeList.AddRange( episodes );
                   }
                }
                else
                {
+                  Console.WriteLine( "Loading episode information from local storage." );
                   var episodes = database.FindEpisodes( commandLine.SeriesId, seasonPathInfo.SeasonNumber );
                   episodeList.AddRange( episodes );
                }
