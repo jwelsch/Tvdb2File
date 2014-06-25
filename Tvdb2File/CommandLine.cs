@@ -52,6 +52,12 @@ namespace Tvdb2File
          private set;
       }
 
+      public bool CollapseMultiPart
+      {
+         get;
+         private set;
+      }
+
       public CommandLine()
       {
          this.SeriesSearchTerms = String.Empty;
@@ -64,7 +70,7 @@ namespace Tvdb2File
 
 Command line usage:
 
-Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-seriesId xxxxx]] [-forceUpdate]
+Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-seriesId xxxxx]] [-forceUpdate] [-dryRun] [-collapseMultiPart]
   -season: (Mandatory) Relative or absolute path to the directory containing
            the season to rename.
   -search: (Optional) Terms to use to search for the series.  If not supplied,
@@ -74,7 +80,8 @@ Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-ser
              argument is mutually exclusive with -search.
   -forceUpdate: (Optional) Include to force an update of the local episode
                 database from thetvdb.com.
-  -dryRun: (Optional) Does everything except do the actual file renaming."
+  -dryRun: (Optional) Does everything except do the actual file renaming.
+  -collapseMultiPart: (Optional) Attempts to automatically collapse episodes specified as multipart into one local file."
             , System.Reflection.Assembly.GetExecutingAssembly().GetName().Version );
       }
 
@@ -121,6 +128,10 @@ Tvdb2File.exe -season ""path to season"" [[-search ""series search term""]|[-ser
                else if ( String.Compare( args[i], "-dryRun", true ) == 0 )
                {
                   this.DryRun = true;
+               }
+               else if ( String.Compare( args[i], "-collapseMultiPart", true ) == 0 )
+               {
+                  this.CollapseMultiPart = true;
                }
                else
                {

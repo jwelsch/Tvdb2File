@@ -4,9 +4,10 @@
 // <author>Justin Welsch</author>
 // </copyright>
 //////////////////////////////////////////////////////////////////////////////
-      
+
 
 using System;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 namespace Tvdb2File
@@ -15,7 +16,7 @@ namespace Tvdb2File
    {
       public Episode Create( XmlReader xmlReader )
       {
-         var allRead = 127U;
+         var allRead = 255U;
          var infoRead = 0U;
          var episode = new Episode();
 
@@ -63,6 +64,20 @@ namespace Tvdb2File
                episode.Language = xmlReader.Value;
                infoRead |= 64U;
             }
+            else if ( XmlHelper.CheckElement( xmlReader, "Combined_episodenumber", XmlNodeType.Element, false ) )
+            {
+               xmlReader.Read();
+               var multiPartNumbers = xmlReader.Value.Split( '.' );
+
+               if ( multiPartNumbers.Length != 2 )
+               {
+                  throw new XmlFormatException( "Combined episode numbers were not formatted correctly." );
+               }
+
+               episode.MultiPartId = Int32.Parse( multiPartNumbers[0] );
+               episode.MultiPartNumber = Int32.Parse( multiPartNumbers[1] );
+               infoRead |= 128U;
+            }
          }
 
          if ( infoRead != allRead )
@@ -97,8 +112,30 @@ namespace Tvdb2File
             {
                missing = "Language";
             }
+            else if ( !infoRead.BitFlagSet( 128U ) )
+            {
+               missing = "Combined_episodenumber";
+            }
 
             throw new XmlFormatException( String.Format( "Missing element \"{0}\" from episode XML.", missing ) );
+         }
+
+         if ( episode.MultiPartNumber == 0 )
+         {
+            var regex = new Regex( @".+? \(\d+\)$" );
+
+            if ( regex.IsMatch( episode.Name ) )
+            {
+               var openParen = episode.Name.LastIndexOf( '(' );
+               var closeParen = episode.Name.LastIndexOf( ')' );
+
+               var number = Int32.Parse( episode.Name.Substring( openParen + 1, closeParen - ( openParen + 1 ) ) );
+
+               if ( number != 0 )
+               {
+                  episode.MultiPartNumber = number;
+               }
+            }
          }
 
          return episode;

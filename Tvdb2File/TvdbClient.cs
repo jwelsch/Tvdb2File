@@ -96,7 +96,8 @@ namespace Tvdb2File
          }
 
          var uriString = String.Format( @"http://thetvdb.com/api/GetSeries.php?seriesname={0}&language={1}", seriesName, language );
-         var seriesData = this.GetHttpStringData( new Uri( uriString ) );
+         var uri = new Uri( uriString );
+         var seriesData = this.GetHttpStringData( uri );
 
          var xmlDoc = new XmlDocument();
          xmlDoc.LoadXml( seriesData );

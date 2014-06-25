@@ -42,23 +42,46 @@ namespace Tvdb2File
    {
       public event EventHandler<FileRenamedArgs> FileRenamed;
 
-      public int RenameSeasonEpisodeFiles( string seasonDirectoryPath, IList<Episode> episodeList, bool dryRun )
+      public int RenameSeasonEpisodeFiles( string seasonDirectoryPath, IList<Episode> episodeList, bool dryRun, bool collapseMultiPart )
       {
          var episodeFileNames = Directory.GetFiles( seasonDirectoryPath, "*.mp4", SearchOption.TopDirectoryOnly );
+         var excessFiles = 0;
 
-         if ( episodeFileNames.Length != episodeList.Count )
+         if ( episodeFileNames.Length < episodeList.Count )
+         {
+            if ( collapseMultiPart )
+            {
+               excessFiles = episodeList.Count - episodeFileNames.Length;
+            }
+            else
+            {
+               throw new UnexpectedEpisodeCountException( String.Format( "The number of episode files ({0}) does not match the number of episodes from thetvdb.com ({1}).", episodeFileNames.Length, episodeList.Count ) );
+            }
+         }
+         else if ( episodeFileNames.Length > episodeList.Count )
          {
             throw new UnexpectedEpisodeCountException( String.Format( "The number of episode files ({0}) does not match the number of episodes from thetvdb.com ({1}).", episodeFileNames.Length, episodeList.Count ) );
          }
 
-         var newFileNames = this.CreateNewFileNameList( episodeList );
-         this.CorrectNewFileNameList( newFileNames );
+         this.CreateNewFileNameList( episodeList );
+         this.RemovePartSuffixFromDissimilarEpisodeNames( episodeList );
 
          Array.Sort<string>( episodeFileNames, new NaturalStringComparer() );
 
          for ( var i = 0; i < episodeFileNames.Length; i++ )
          {
-            var targetFileNameWithExt = newFileNames[i] + Path.GetExtension( episodeFileNames[i] );
+            var fileName = episodeList[i].FileName;
+            var multiPartRename = false;
+
+            if ( episodeList[i].IsMultiPart && ( excessFiles > 0 ) )
+            {
+               fileName = this.MakeMultiPartFileName( i, episodeList );
+
+               multiPartRename = true;
+               excessFiles--;
+            }
+
+            var targetFileNameWithExt = fileName + Path.GetExtension( episodeFileNames[i] );
             var targetFilePath = Path.Combine( Path.GetDirectoryName( episodeFileNames[i] ), targetFileNameWithExt );
 
             if ( !dryRun )
@@ -71,23 +94,25 @@ namespace Tvdb2File
             {
                this.FileRenamed( this, new FileRenamedArgs( Path.GetFileName( episodeFileNames[i] ), targetFileNameWithExt ) );
             }
+
+            if ( multiPartRename )
+            {
+               i++;
+            }
          }
 
          return episodeFileNames.Length;
       }
 
-      private string[] CreateNewFileNameList( IList<Episode> episodeList )
+      private void CreateNewFileNameList( IList<Episode> episodeList )
       {
          var newFileNameList = new List<string>();
 
          for ( var i = 0; i < episodeList.Count; i++ )
          {
             var normalizedName = this.NormalizeEpisodeName( episodeList[i].Name );
-            var targetFileName = String.Format( "S{0:D2}E{1:D2} {2}", episodeList[i].SeasonNumber, episodeList[i].EpisodeNumber, normalizedName );
-            newFileNameList.Add( targetFileName );
+            episodeList[i].FileName = String.Format( "S{0:D2}E{1:D2} {2}", episodeList[i].SeasonNumber, episodeList[i].EpisodeNumber, normalizedName );
          }
-
-         return newFileNameList.ToArray();
       }
 
       private string NormalizeEpisodeName( string episodeName )
@@ -113,35 +138,56 @@ namespace Tvdb2File
          return normalizedName.ToString();
       }
 
-      private void CorrectNewFileNameList( string[] newFileNameList )
+      private void RemovePartSuffixFromDissimilarEpisodeNames( IList<Episode> episodeList )
       {
-         for ( var i = 0; i < newFileNameList.Length; i++ )
+         for ( var i = 0; i < episodeList.Count; i++ )
          {
             var regex = new Regex( @" Part \d+$" );
-            var firstMatch = regex.Match( newFileNameList[i] );
+            var firstMatch = regex.Match( episodeList[i].FileName );
 
             if ( firstMatch.Success )
             {
-               if ( i + 1 < newFileNameList.Length )
+               if ( i + 1 < episodeList.Count )
                {
-                  var secondMatch = regex.Match( newFileNameList[i + 1] );
+                  var secondMatch = regex.Match( episodeList[i + 1].FileName );
 
                   if ( secondMatch.Success )
                   {
                      var offset = 7;
-                     var firstBase = newFileNameList[i].Substring( offset, firstMatch.Index - firstMatch.Length );
-                     var secondBase = newFileNameList[i + 1].Substring( offset, secondMatch.Index - secondMatch.Length );
+                     var firstBase = episodeList[i].FileName.Substring( offset, firstMatch.Index - firstMatch.Length );
+                     var secondBase = episodeList[i + 1].FileName.Substring( offset, secondMatch.Index - secondMatch.Length );
 
                      if ( String.Compare( firstBase, secondBase, true ) != 0 )
                      {
-                        newFileNameList[i] = regex.Replace( newFileNameList[i], string.Empty );
-                        newFileNameList[i + 1] = regex.Replace( newFileNameList[i + 1], string.Empty );
+                        episodeList[i].FileName = regex.Replace( episodeList[i].FileName, string.Empty );
+                        episodeList[i + 1].FileName = regex.Replace( episodeList[i + 1].FileName, string.Empty );
                         i++;
                      }
                   }
                }
             }
          }
+      }
+
+      private string MakeMultiPartFileName( int firstPartIndex, IList<Episode> episodeList )
+      {
+         var multiPartId = episodeList[firstPartIndex].MultiPartId;
+         var lastPartIndex = firstPartIndex;
+         var regex = new Regex( @".+? \(\d+\)$" );
+
+         for ( var i = firstPartIndex + 1; i < episodeList.Count; i++ )
+         {
+            if ( regex.IsMatch( episodeList[i].Name ) )
+            {
+               lastPartIndex = i;
+            }
+            else
+            {
+               break;
+            }
+         }
+
+         return String.Format( "S{0:D2}E{1:D2}-E{2:D2} {3}", episodeList[firstPartIndex].SeasonNumber, episodeList[firstPartIndex].EpisodeNumber, episodeList[lastPartIndex].EpisodeNumber, episodeList[firstPartIndex].FileName );
       }
    }
 }
