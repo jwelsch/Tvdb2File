@@ -122,7 +122,9 @@ namespace Tvdb2File
                   }
                   else if ( this.MultiPartNumber != number )
                   {
-                     throw new ArgumentException( String.Format( "The specified multipart episode number ({0}) is not the same as what is found in the episode name ({1}).", multiPartNumber, number ) );
+                     // Sometimes thetvdb.com XML data is wrong - err on the side of the show name.
+                     this.MultiPartNumber = number;
+                     //throw new ArgumentException( String.Format( "The specified multipart episode number ({0}) is not the same as what is found in the episode name ({1}) of episode \"{2}\".", multiPartNumber, number, name ) );
                   }
                }
                catch ( FormatException )
