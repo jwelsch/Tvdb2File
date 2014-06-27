@@ -110,22 +110,19 @@ namespace Tvdb2File
 
          for ( var i = 0; i < episodeList.Count; i++ )
          {
-            var normalizedName = this.NormalizeEpisodeName( episodeList[i].Name );
+            var normalizedName = this.NormalizeEpisodeName( episodeList[i] );
             episodeList[i].FileName = String.Format( "S{0:D2}E{1:D2} {2}", episodeList[i].SeasonNumber, episodeList[i].EpisodeNumber, normalizedName );
          }
       }
 
-      private string NormalizeEpisodeName( string episodeName )
+      private string NormalizeEpisodeName( Episode episode )
       {
-         var normalizedName = new StringBuilder( episodeName );
-         var findRegex = new Regex( @".+? \(\d+\)$" );
+         var normalizedName = new StringBuilder( episode.Name );
 
-         if ( findRegex.IsMatch( episodeName ) )
+         if ( episode.IsMultiPart )
          {
-            var renameRegex = new Regex( @"\(\d+\)" );
-            var match = renameRegex.Match( episodeName );
-            var number = match.Value.Substring( 1, match.Value.Length - 2 );
-            normalizedName = new StringBuilder( renameRegex.Replace( episodeName, String.Format( "Part {0}", number ) ) );
+            normalizedName.Remove( episode.NameMultiPartStart, normalizedName.Length - episode.NameMultiPartStart );
+            normalizedName.AppendFormat( "Part {0}", episode.MultiPartNumber );
          }
 
          var invalidChararacters = Path.GetInvalidFileNameChars();
@@ -177,7 +174,7 @@ namespace Tvdb2File
 
          for ( var i = firstPartIndex + 1; i < episodeList.Count; i++ )
          {
-            if ( regex.IsMatch( episodeList[i].Name ) )
+            if ( episodeList[i].IsMultiPart )
             {
                lastPartIndex = i;
             }
@@ -187,7 +184,8 @@ namespace Tvdb2File
             }
          }
 
-         return String.Format( "S{0:D2}E{1:D2}-E{2:D2} {3}", episodeList[firstPartIndex].SeasonNumber, episodeList[firstPartIndex].EpisodeNumber, episodeList[lastPartIndex].EpisodeNumber, episodeList[firstPartIndex].FileName );
+         var fileName = String.Format( "S{0:D2}E{1:D2}-E{2:D2} {3}", episodeList[firstPartIndex].SeasonNumber, episodeList[firstPartIndex].EpisodeNumber, episodeList[lastPartIndex].EpisodeNumber, episodeList[firstPartIndex].NameBase );
+         return fileName;
       }
    }
 }

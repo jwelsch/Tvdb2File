@@ -19,6 +19,8 @@ namespace Tvdb2File
          var allRead = 255U;
          var infoRead = 0U;
          var episode = new Episode();
+         var name = string.Empty;
+         var multiPartNumber = 0;
 
          while ( xmlReader.Read() && ( infoRead != allRead ) )
          {
@@ -31,7 +33,7 @@ namespace Tvdb2File
             else if ( XmlHelper.CheckElement( xmlReader, "EpisodeName", XmlNodeType.Element, false ) )
             {
                xmlReader.Read();
-               episode.Name = xmlReader.Value;
+               name = xmlReader.Value;
                infoRead |= 2U;
             }
             else if ( XmlHelper.CheckElement( xmlReader, "EpisodeNumber", XmlNodeType.Element, false ) )
@@ -75,7 +77,7 @@ namespace Tvdb2File
                }
 
                episode.MultiPartId = Int32.Parse( multiPartNumbers[0] );
-               episode.MultiPartNumber = Int32.Parse( multiPartNumbers[1] );
+               multiPartNumber = Int32.Parse( multiPartNumbers[1] );
                infoRead |= 128U;
             }
          }
@@ -120,23 +122,7 @@ namespace Tvdb2File
             throw new XmlFormatException( String.Format( "Missing element \"{0}\" from episode XML.", missing ) );
          }
 
-         if ( episode.MultiPartNumber == 0 )
-         {
-            var regex = new Regex( @".+? \(\d+\)$" );
-
-            if ( regex.IsMatch( episode.Name ) )
-            {
-               var openParen = episode.Name.LastIndexOf( '(' );
-               var closeParen = episode.Name.LastIndexOf( ')' );
-
-               var number = Int32.Parse( episode.Name.Substring( openParen + 1, closeParen - ( openParen + 1 ) ) );
-
-               if ( number != 0 )
-               {
-                  episode.MultiPartNumber = number;
-               }
-            }
-         }
+         episode.SetName( name, multiPartNumber );
 
          return episode;
       }

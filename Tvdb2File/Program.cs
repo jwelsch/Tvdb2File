@@ -158,7 +158,7 @@ namespace Tvdb2File
             System.Diagnostics.Trace.WriteLine( ex );
             Console.WriteLine();
             Console.WriteLine( ex.Message );
-            Console.WriteLine( "Sometimes this will happen because thetvdb.com lists multiple part episodes separately, but the parts are combined into one file locally.  If this is the case, simply create a dummy file and name it such that it is immediately after the combined file.  Tvdb2File will rename the combined file with a \"Part X\" and the dummy file with a \"Part Y\".  You can then remove the \"Part X\" from the combined file and delete the dummy file manually." );
+            Console.WriteLine( "Sometimes this will happen because thetvdb.com lists multiple part episodes separately, but the parts are combined into one file locally.  If this is the case, try using the -collapseMultiPart parameter." );
             Console.WriteLine();
          }
          catch ( CommandLineException ex )

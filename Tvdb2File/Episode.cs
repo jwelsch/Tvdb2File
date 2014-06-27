@@ -45,7 +45,13 @@ namespace Tvdb2File
       public string Name
       {
          get;
-         set;
+         private set;
+      }
+
+      public string NameBase
+      {
+         get;
+         private set;
       }
 
       public string Language
@@ -56,7 +62,7 @@ namespace Tvdb2File
 
       public bool IsMultiPart
       {
-         get { return this.MultiPartNumber != 0; }
+         get { return this.MultiPartNumber > 0; }
       }
 
       public int MultiPartId
@@ -68,7 +74,13 @@ namespace Tvdb2File
       public int MultiPartNumber
       {
          get;
-         set;
+         private set;
+      }
+
+      public int NameMultiPartStart
+      {
+         get;
+         private set;
       }
 
       public string FileName
@@ -79,33 +91,53 @@ namespace Tvdb2File
 
       public Episode()
       {
-         this.MultiPartNumber = 1;
+         this.MultiPartNumber = 0;
       }
 
-      public bool NameIsMultiPart()
+      public void SetName( string name, int multiPartNumber )
       {
-         var regex = new Regex( @".+? \(\d+\)$" );
+         this.Name = name;
+         this.NameBase = this.Name;
+         this.MultiPartNumber = multiPartNumber;
 
-         return regex.IsMatch( this.Name );
+         if ( this.MultiPartNumber == 0 )
+         {
+            this.MultiPartNumber = this.MultiPartFromName();
+         }
       }
 
-      public int MultiPartFromName()
+      private int MultiPartFromName()
       {
-         var openParen = this.Name.LastIndexOf( '(' );
+         var begin = this.Name.LastIndexOf( '(' );
 
-         if ( openParen < 0 )
+         if ( begin < 0 )
          {
-            throw new ArgumentException( "Name does not contain multipart information." );
+            return 0;
          }
 
-         var closeParen = this.Name.LastIndexOf( ')' );
+         this.NameMultiPartStart = begin;
 
-         if ( closeParen < 0 )
+         begin++;
+
+         var end = this.Name.LastIndexOf( ')' );
+
+         if ( end < 0 )
          {
-            throw new ArgumentException( "Name does not contain multipart information." );
+            return 0;
          }
 
-         return Int32.Parse( this.Name.Substring( openParen + 1, closeParen - ( openParen + 1 ) ) );
+         try
+         {
+            var number = Int32.Parse( this.Name.Substring( begin, end - begin ) );
+
+            this.NameBase = this.Name.Substring( 0, begin - 2 );
+
+            return number;
+         }
+         catch ( FormatException )
+         {
+            return 0;
+         }
       }
    }
 }

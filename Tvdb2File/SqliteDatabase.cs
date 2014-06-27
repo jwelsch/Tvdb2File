@@ -257,11 +257,11 @@ WHERE
                {
                   episode = new Episode();
                   episode.EpisodeId = (Int64) reader["ep.Id"];
-                  episode.Name = (string) reader["ep.Name"];
                   episode.EpisodeNumber = (int) reader["ep.Number"];
                   episode.SeasonNumber = (int) reader["sn.Number"];
                   episode.SeriesId = (Int64) reader["ep.SeriesId"];
                   episode.SeasonId = (Int64) reader["ep.SeasonId"];
+                  episode.SetName( (string) reader["ep.Name"], 0 );
                }
             }
          }
@@ -294,13 +294,14 @@ WHERE
                   episode = new Episode()
                   {
                      EpisodeId = (Int64) reader.GetValue( 0 ),
-                     Name = (string) reader.GetValue( 1 ),
                      EpisodeNumber = (int) reader.GetValue( 2 ),
                      Language = (string) reader.GetValue( 3 ),
                      SeasonNumber = (int) reader.GetValue( 4 ),
                      SeriesId = (Int64) reader.GetValue( 5 ),
                      SeasonId = (Int64) reader.GetValue( 6 )
                   };
+
+                  episode.SetName( (string) reader.GetValue( 1 ), 0 );
                }
             }
          }
@@ -336,13 +337,13 @@ WHERE
                   var episode = new Episode()
                   {
                      EpisodeId = (Int64) reader.GetValue( 0 ),
-                     Name = (string) reader.GetValue( 1 ),
                      EpisodeNumber = (int) reader.GetValue( 2 ),
                      Language = (string) reader.GetValue( 3 ),
                      SeasonNumber = (int) reader.GetValue( 4 ),
                      SeriesId = (Int64) reader.GetValue( 5 ),
                      SeasonId = (Int64) reader.GetValue( 6 )
                   };
+                  episode.SetName( (string) reader.GetValue( 1 ), 0 );
                   episodes.Add( episode );
                }
             }
