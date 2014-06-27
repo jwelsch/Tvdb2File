@@ -192,10 +192,9 @@ namespace Tvdb2File
 
          using ( var database = new SqliteDatabase() )
          {
-            database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
-
             if ( File.Exists( Program.LocalDatabasePath ) )
             {
+               database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
                database.BeginTransaction();
 
                if ( commandLine.SeriesId == CommandLine.NoSeriesId )
@@ -218,6 +217,7 @@ namespace Tvdb2File
             }
             else
             {
+               database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
                database.CreateTableSeries();
                database.CreateTableSeason();
                database.CreateTableEpisode();

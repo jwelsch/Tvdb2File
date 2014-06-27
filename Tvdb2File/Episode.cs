@@ -91,7 +91,6 @@ namespace Tvdb2File
 
       public Episode()
       {
-         this.MultiPartNumber = 0;
       }
 
       public void SetName( string name, int multiPartNumber )
@@ -100,44 +99,56 @@ namespace Tvdb2File
          this.NameBase = this.Name;
          this.MultiPartNumber = multiPartNumber;
 
-         if ( this.MultiPartNumber == 0 )
+         var begin = this.Name.LastIndexOf( '(' );
+
+         if ( begin > 0 )
          {
-            this.MultiPartNumber = this.MultiPartFromName();
+            begin++;
+
+            var end = this.Name.LastIndexOf( ')' );
+
+            if ( end > 0 )
+            {
+               try
+               {
+                  var number = Int32.Parse( this.Name.Substring( begin, end - begin ) );
+
+                  this.NameMultiPartStart = begin - 1;
+                  this.NameBase = this.Name.Substring( 0, begin - 2 );
+
+                  if ( this.MultiPartNumber == 0 )
+                  {
+                     this.MultiPartNumber = number;
+                  }
+                  else if ( this.MultiPartNumber != number )
+                  {
+                     throw new ArgumentException( String.Format( "The specified multipart episode number ({0}) is not the same as what is found in the episode name ({1}).", multiPartNumber, number ) );
+                  }
+               }
+               catch ( FormatException )
+               {
+               }
+            }
          }
       }
 
-      private int MultiPartFromName()
+      public static string StripMultiPartSuffix( string name )
       {
-         var begin = this.Name.LastIndexOf( '(' );
+         var regexParen = new Regex( @" \(\d+\)$" );
+         var regexPart = new Regex( @" Part \d+$" );
 
-         if ( begin < 0 )
+         var match = regexParen.Match( name );
+         if ( !match.Success )
          {
-            return 0;
+            match = regexPart.Match( name );
          }
 
-         this.NameMultiPartStart = begin;
-
-         begin++;
-
-         var end = this.Name.LastIndexOf( ')' );
-
-         if ( end < 0 )
+         if ( match.Success )
          {
-            return 0;
+            return name.Substring( 0, match.Index );
          }
 
-         try
-         {
-            var number = Int32.Parse( this.Name.Substring( begin, end - begin ) );
-
-            this.NameBase = this.Name.Substring( 0, begin - 2 );
-
-            return number;
-         }
-         catch ( FormatException )
-         {
-            return 0;
-         }
+         return name;
       }
    }
 }

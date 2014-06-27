@@ -150,6 +150,8 @@ Id INTEGER UNIQUE PRIMARY KEY NOT NULL
 , SeriesId INTEGER NOT NULL
 , SeasonId INTEGER NOT NULL
 , Language TEXT NOT NULL
+, MultiPartId INT NOT NULL
+, MultiPartNumber INT NOT NULL
 , FOREIGN KEY( SeriesId ) REFERENCES Series( Id )
 , FOREIGN KEY( SeasonId ) REFERENCES Season( Id )
 )";
@@ -261,7 +263,8 @@ WHERE
                   episode.SeasonNumber = (int) reader["sn.Number"];
                   episode.SeriesId = (Int64) reader["ep.SeriesId"];
                   episode.SeasonId = (Int64) reader["ep.SeasonId"];
-                  episode.SetName( (string) reader["ep.Name"], 0 );
+                  episode.MultiPartId = (int) reader["ep.MultiPartId"];
+                  episode.SetName( (string) reader["ep.Name"], (int) reader["ep.MultiPartNumber"] );
                }
             }
          }
@@ -298,10 +301,11 @@ WHERE
                      Language = (string) reader.GetValue( 3 ),
                      SeasonNumber = (int) reader.GetValue( 4 ),
                      SeriesId = (Int64) reader.GetValue( 5 ),
-                     SeasonId = (Int64) reader.GetValue( 6 )
+                     SeasonId = (Int64) reader.GetValue( 6 ),
+                     MultiPartId = (int) reader.GetValue( 7 )
                   };
 
-                  episode.SetName( (string) reader.GetValue( 1 ), 0 );
+                  episode.SetName( (string) reader.GetValue( 1 ), (int) reader.GetValue( 8 ) );
                }
             }
          }
@@ -313,7 +317,7 @@ WHERE
       {
          var episodes = new List<Episode>();
          var commandText =
-@"SELECT ep.Id, ep.Name, ep.Number, ep.Language, sn.Number, ep.SeriesId, ep.SeasonId
+@"SELECT ep.Id, ep.Name, ep.Number, ep.Language, sn.Number, ep.SeriesId, ep.SeasonId, ep.MultiPartId, ep.MultiPartNumber
 FROM Episode AS ep
 LEFT JOIN Season AS sn ON ep.SeasonId = sn.Id
 WHERE
@@ -341,9 +345,10 @@ WHERE
                      Language = (string) reader.GetValue( 3 ),
                      SeasonNumber = (int) reader.GetValue( 4 ),
                      SeriesId = (Int64) reader.GetValue( 5 ),
-                     SeasonId = (Int64) reader.GetValue( 6 )
+                     SeasonId = (Int64) reader.GetValue( 6 ),
+                     MultiPartId = (int) reader.GetValue( 7 )
                   };
-                  episode.SetName( (string) reader.GetValue( 1 ), 0 );
+                  episode.SetName( (string) reader.GetValue( 1 ), (int) reader.GetValue( 8 ) );
                   episodes.Add( episode );
                }
             }
@@ -434,8 +439,8 @@ VALUES ( $id, $seasonNumber, $seriesId );";
       {
          var commandText =
 @"INSERT INTO Episode
-( Id, Name, Number, SeriesId, SeasonId, Language )
-VALUES ( $id, $name, $number, $seriesId, $seasonId, $language );";
+( Id, Name, Number, SeriesId, SeasonId, Language, MultiPartId, MultiPartNumber )
+VALUES ( $id, $name, $number, $seriesId, $seasonId, $language, $multiPartId, $multiPartNumber );";
 
          using ( var command = new SQLiteCommand( commandText, this.connection, this.transaction ) )
          {
@@ -445,6 +450,8 @@ VALUES ( $id, $name, $number, $seriesId, $seasonId, $language );";
             command.Parameters.AddWithValue( "$seriesId", episode.SeriesId );
             command.Parameters.AddWithValue( "$seasonId", episode.SeasonId );
             command.Parameters.AddWithValue( "$language", episode.Language );
+            command.Parameters.AddWithValue( "$multiPartId", episode.MultiPartId );
+            command.Parameters.AddWithValue( "$multiPartNumber", episode.MultiPartNumber );
 
             command.ExecuteNonQuery();
          }

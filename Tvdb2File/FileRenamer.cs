@@ -7,9 +7,9 @@
 
 using System;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Tvdb2File
 {
@@ -139,25 +139,16 @@ namespace Tvdb2File
       {
          for ( var i = 0; i < episodeList.Count; i++ )
          {
-            var regex = new Regex( @" Part \d+$" );
-            var firstMatch = regex.Match( episodeList[i].FileName );
-
-            if ( firstMatch.Success )
+            if ( episodeList[i].IsMultiPart )
             {
                if ( i + 1 < episodeList.Count )
                {
-                  var secondMatch = regex.Match( episodeList[i + 1].FileName );
-
-                  if ( secondMatch.Success )
+                  if ( episodeList[i + 1].IsMultiPart )
                   {
-                     var offset = 7;
-                     var firstBase = episodeList[i].FileName.Substring( offset, firstMatch.Index - firstMatch.Length );
-                     var secondBase = episodeList[i + 1].FileName.Substring( offset, secondMatch.Index - secondMatch.Length );
-
-                     if ( String.Compare( firstBase, secondBase, true ) != 0 )
+                     if ( String.Compare( episodeList[i].NameBase, episodeList[i + 1].NameBase, true ) != 0 )
                      {
-                        episodeList[i].FileName = regex.Replace( episodeList[i].FileName, string.Empty );
-                        episodeList[i + 1].FileName = regex.Replace( episodeList[i + 1].FileName, string.Empty );
+                        episodeList[i].FileName = Episode.StripMultiPartSuffix( episodeList[i].FileName );
+                        episodeList[i + 1].FileName = Episode.StripMultiPartSuffix( episodeList[i + 1].FileName );
                         i++;
                      }
                   }
