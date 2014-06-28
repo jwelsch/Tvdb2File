@@ -23,7 +23,18 @@ namespace Tvdb2File
 
          var fileName = Path.GetFileName( this.Default );
          var appDataPath = Environment.GetFolderPath( Environment.SpecialFolder.ApplicationData );
-         this.AppData = Path.Combine( appDataPath, fileName );
+         var tvdb2fileAppDataPath = Path.Combine( appDataPath, "Tvdb2File" );
+         this.AppData = Path.Combine( tvdb2fileAppDataPath, fileName );
+      }
+
+      public bool DoesDefaultExist()
+      {
+         return File.Exists( this.Default );
+      }
+
+      public bool DoesAppDataExist()
+      {
+         return File.Exists( this.AppData );
       }
    }
 }

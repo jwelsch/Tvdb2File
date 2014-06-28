@@ -192,15 +192,18 @@ namespace Tvdb2File
 
          using ( var database = new SqliteDatabase() )
          {
-            if ( File.Exists( Program.LocalDatabasePath ) )
+            var localStoragePath = new LocalStoragePath( Program.LocalDatabasePath );
+
+            if ( localStoragePath.DoesAppDataExist() || localStoragePath.DoesDefaultExist() )
             {
-               database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
+               database.Open( localStoragePath );
                Console.WriteLine( String.Format( "Opened local storage file \"{0}\".", database.DatabasePath ) );
                database.BeginTransaction();
 
                if ( commandLine.SeriesId == CommandLine.NoSeriesId )
                {
                   var searchTerms = ( !String.IsNullOrEmpty( commandLine.SeriesSearchTerms ) ) ? commandLine.SeriesSearchTerms : seasonPathInfo.SeriesName;
+                  Console.WriteLine( String.Format( "Checking local storage for search term \"{0}\".", searchTerms ) );
                   var episodes = database.FindEpisodes( searchTerms, seasonPathInfo.SeasonNumber );
 
                   if ( episodes != null )
@@ -211,8 +214,9 @@ namespace Tvdb2File
                }
                else
                {
-                  Console.WriteLine( "Loading episode information from local storage." );
+                  Console.WriteLine( String.Format( "Checking local storage for series ID \"{0}\".", commandLine.SeriesId ) );
                   var episodes = database.FindEpisodes( commandLine.SeriesId, seasonPathInfo.SeasonNumber );
+                  Console.WriteLine( "Loading episode information from local storage." );
                   episodeList.AddRange( episodes );
                }
             }

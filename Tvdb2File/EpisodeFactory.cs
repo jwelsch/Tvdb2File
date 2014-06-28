@@ -71,13 +71,16 @@ namespace Tvdb2File
                xmlReader.Read();
                var multiPartNumbers = xmlReader.Value.Split( '.' );
 
-               if ( multiPartNumbers.Length != 2 )
+               if ( multiPartNumbers.Length > 0 )
                {
-                  throw new XmlFormatException( "Combined episode numbers were not formatted correctly." );
+                  episode.MultiPartId = Int32.Parse( multiPartNumbers[0] );
                }
 
-               episode.MultiPartId = Int32.Parse( multiPartNumbers[0] );
-               multiPartNumber = Int32.Parse( multiPartNumbers[1] );
+               if ( multiPartNumbers.Length > 1 )
+               {
+                  multiPartNumber = Int32.Parse( multiPartNumbers[1] );
+               }
+
                infoRead |= 128U;
             }
          }

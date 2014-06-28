@@ -243,7 +243,7 @@ WHERE
       {
          Episode episode = null;
          var commandText =
-@"SELECT ep.Id, ep.Name, ep.Number, ep.Language, sn.Number, ep.SeriesId, ep.SeasonId
+@"SELECT ep.Id, ep.Name, ep.Number, ep.Language, sn.Number, ep.SeriesId, ep.SeasonId, ep.MultiPartId, ep.MultiPartNumber
 FROM Episode AS ep
 LEFT JOIN Season AS sn ON ep.SeasonId = sn.Id
 WHERE
@@ -276,7 +276,7 @@ WHERE
       {
          Episode episode = null;
          var commandText =
-@"SELECT ep.Id, ep.Name, ep.Number, ep.Language, sn.Number, ep.SeriesId, ep.SeasonId
+@"SELECT ep.Id, ep.Name, ep.Number, ep.Language, sn.Number, ep.SeriesId, ep.SeasonId, ep.MultiPartId, ep.MultiPartNumber
 FROM Episode AS ep
 LEFT JOIN Season AS sn ON ep.SeasonId = sn.Id
 WHERE
