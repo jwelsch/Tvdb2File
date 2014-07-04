@@ -8,6 +8,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
@@ -63,41 +64,40 @@ namespace Tvdb2File
             throw new UnexpectedEpisodeCountException( String.Format( "The number of episode files ({0}) does not match the number of episodes from thetvdb.com ({1}).", episodeFileNames.Length, episodeList.Count ) );
          }
 
+         episodeList.Sort( ( item1, item2 ) =>
+            {
+               return item1.EpisodeNumber - item2.EpisodeNumber;
+            } );
          this.CreateNewFileNameList( episodeList );
          this.RemovePartSuffixFromDissimilarEpisodeNames( episodeList );
 
          Array.Sort<string>( episodeFileNames, new NaturalStringComparer() );
 
-         for ( var i = 0; i < episodeFileNames.Length; i++ )
+         var episodeListIndex = 0;
+         for ( var episodeFileNamesIndex = 0; episodeFileNamesIndex < episodeFileNames.Length; episodeFileNamesIndex++, episodeListIndex++ )
          {
-            var fileName = episodeList[i].FileName;
-            var multiPartRename = false;
+            var fileName = episodeList[episodeListIndex].FileName;
 
-            if ( episodeList[i].IsMultiPart && ( excessFiles > 0 ) )
+            if ( episodeList[episodeListIndex].IsMultiPart && ( excessFiles > 0 ) )
             {
-               fileName = this.MakeMultiPartFileName( i, episodeList );
+               fileName = this.MakeMultiPartFileName( episodeFileNamesIndex, episodeList );
 
-               multiPartRename = true;
                excessFiles--;
+               episodeListIndex++;
             }
 
-            var targetFileNameWithExt = fileName + Path.GetExtension( episodeFileNames[i] );
-            var targetFilePath = Path.Combine( Path.GetDirectoryName( episodeFileNames[i] ), targetFileNameWithExt );
+            var targetFileNameWithExt = fileName + Path.GetExtension( episodeFileNames[episodeFileNamesIndex] );
+            var targetFilePath = Path.Combine( Path.GetDirectoryName( episodeFileNames[episodeFileNamesIndex] ), targetFileNameWithExt );
 
             if ( !dryRun )
             {
                // TODO: Uncomment when done testing!!
-               File.Move( episodeFileNames[i], targetFilePath );
+               File.Move( episodeFileNames[episodeFileNamesIndex], targetFilePath );
             }
 
             if ( this.FileRenamed != null )
             {
-               this.FileRenamed( this, new FileRenamedArgs( Path.GetFileName( episodeFileNames[i] ), targetFileNameWithExt ) );
-            }
-
-            if ( multiPartRename )
-            {
-               i++;
+               this.FileRenamed( this, new FileRenamedArgs( Path.GetFileName( episodeFileNames[episodeFileNamesIndex] ), targetFileNameWithExt ) );
             }
          }
 
