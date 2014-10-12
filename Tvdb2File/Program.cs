@@ -52,14 +52,12 @@ namespace Tvdb2File
        *     -collapseMultiPart: (Optional) Attempts to automatically collapse episodes specified as multipart into one local file.
        */
 
-      private static string LocalDatabasePath = @"C:\Program Files\Tvdb2File\localStore.db3";
+      private static string LocalDatabaseFileName = "localStore.db3";
 
       static void Main( string[] args )
       {
          try
          {
-            Program.LocalDatabasePath = Path.Combine( Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location ), "localStore.db3" );
-
             var commandLine = new CommandLine();
             commandLine.Parse( args );
 
@@ -67,13 +65,15 @@ namespace Tvdb2File
 
             IList<Episode> episodeList = null;
 
+            var localStoragePath = new LocalStoragePath( Program.LocalDatabaseFileName );
+
             if ( commandLine.ForceUpdate )
             {
-               Program.PurgeLocalData();
+               Program.PurgeLocalData( localStoragePath );
             }
             else
             {
-               episodeList = Program.GetEpisodesLocally( commandLine, seasonPathInfo );
+               episodeList = Program.GetEpisodesLocally( localStoragePath, commandLine, seasonPathInfo );
             }
 
             if ( ( episodeList == null ) || ( episodeList.Count == 0 ) )
@@ -83,7 +83,7 @@ namespace Tvdb2File
                if ( ( episodeList != null ) && ( episodeList.Count > 0 ) )
                {
                   Console.WriteLine( "Storing episode information locally." );
-                  Program.StoreEpisodesLocally( commandLine, seasonPathInfo, episodeList );
+                  Program.StoreEpisodesLocally( localStoragePath, commandLine, seasonPathInfo, episodeList );
                   Console.WriteLine( "Successfully stored episode information locally." );
                }
 
@@ -186,15 +186,13 @@ namespace Tvdb2File
          }
       }
 
-      private static IList<Episode> GetEpisodesLocally( CommandLine commandLine, SeasonPathInfo seasonPathInfo )
+      private static IList<Episode> GetEpisodesLocally( LocalStoragePath localStoragePath, CommandLine commandLine, SeasonPathInfo seasonPathInfo )
       {
          var episodeList = new List<Episode>();
 
          using ( var database = new SqliteDatabase() )
          {
-            var localStoragePath = new LocalStoragePath( Program.LocalDatabasePath );
-
-            if ( localStoragePath.DoesAppDataExist() || localStoragePath.DoesDefaultExist() )
+            if ( localStoragePath.DoesActualPathExist() )
             {
                database.Open( localStoragePath );
                Console.WriteLine( String.Format( "Opened local storage file \"{0}\".", database.DatabasePath ) );
@@ -222,7 +220,7 @@ namespace Tvdb2File
             }
             else
             {
-               database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
+               database.Open( localStoragePath );
                Console.WriteLine( String.Format( "Opened local storage file \"{0}\".", database.DatabasePath ) );
                database.CreateTableSeries();
                database.CreateTableSeason();
@@ -280,13 +278,13 @@ namespace Tvdb2File
          return episodeList;
       }
 
-      private static void StoreEpisodesLocally( CommandLine commandLine, SeasonPathInfo seasonPathInfo, IList<Episode> episodeList )
+      private static void StoreEpisodesLocally( LocalStoragePath localStoragePath, CommandLine commandLine, SeasonPathInfo seasonPathInfo, IList<Episode> episodeList )
       {
          var count = 0;
 
          using ( var database = new SqliteDatabase() )
          {
-            database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
+            database.Open( localStoragePath );
             Console.WriteLine( String.Format( "Opened local storage file \"{0}\".", database.DatabasePath ) );
             database.BeginTransaction();
 
@@ -365,11 +363,11 @@ namespace Tvdb2File
          Console.WriteLine( String.Format( "\rAdded {0} episodes to local store.", count ) );
       }
 
-      private static void PurgeLocalData()
+      private static void PurgeLocalData( LocalStoragePath localStoragePath )
       {
          using ( var database = new SqliteDatabase() )
          {
-            database.Open( new LocalStoragePath( Program.LocalDatabasePath ) );
+            database.Open( localStoragePath );
             database.DeleteAllEpisodes();
             database.DeleteAllSeasons();
             database.DeleteAllSeries();

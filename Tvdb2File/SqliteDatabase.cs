@@ -29,25 +29,9 @@ namespace Tvdb2File
 
       public void Open( LocalStoragePath sqlitePath )
       {
-         try
-         {
-            this.connection = new SQLiteConnection( String.Format( "Data Source=\"{0}\";", sqlitePath.Default ) );
-            this.connection.Open();
-            this.DatabasePath = sqlitePath.Default;
-         }
-         catch ( SQLiteException ex )
-         {
-            if ( ex.ErrorCode == SQLiteErrorCode.CantOpen )
-            {
-               this.connection = new SQLiteConnection( String.Format( "Data Source=\"{0}\";", sqlitePath.AppData ) );
-               this.connection.Open();
-               this.DatabasePath = sqlitePath.AppData;
-            }
-            else
-            {
-               throw ex;
-            }
-         }
+         this.connection = new SQLiteConnection( String.Format( "Data Source=\"{0}\";", sqlitePath.ActualPath ) );
+         this.connection.Open();
+         this.DatabasePath = sqlitePath.ActualPath;
       }
 
       public void Close()
@@ -203,10 +187,10 @@ WHERE
             return null;
          }
          else
-         if ( seriesList.Count > 1 )
-         {
-            throw new MultipleSeriesReturnedException( seriesList );
-         }
+            if ( seriesList.Count > 1 )
+            {
+               throw new MultipleSeriesReturnedException( seriesList );
+            }
 
          return seriesList[0];
       }
