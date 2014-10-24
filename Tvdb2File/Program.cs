@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using CommandLineLib;
 
 namespace Tvdb2File
 {
@@ -56,34 +57,36 @@ namespace Tvdb2File
 
       static void Main( string[] args )
       {
+         CommandLine<CommandLineArguments> commandLine = null;
+
          try
          {
-            var commandLine = new CommandLine();
-            commandLine.Parse( args );
+            commandLine = new CommandLine<CommandLineArguments>();
+            var clArguments = commandLine.Parse( args );
 
-            var seasonPathInfo = new SeasonPathInfo( commandLine.SeasonPath );
+            var seasonPathInfo = new SeasonPathInfo( clArguments.SeasonPath );
 
             IList<Episode> episodeList = null;
 
             var localStoragePath = new LocalStoragePath( Program.LocalDatabaseFileName );
 
-            if ( commandLine.ForceUpdate )
+            if ( clArguments.ForceUpdate )
             {
                Program.PurgeLocalData( localStoragePath );
             }
             else
             {
-               episodeList = Program.GetEpisodesLocally( localStoragePath, commandLine, seasonPathInfo );
+               episodeList = Program.GetEpisodesLocally( localStoragePath, clArguments, seasonPathInfo );
             }
 
             if ( ( episodeList == null ) || ( episodeList.Count == 0 ) )
             {
-               episodeList = Program.GetEpisodesRemotely( commandLine, seasonPathInfo );
+               episodeList = Program.GetEpisodesRemotely( clArguments, seasonPathInfo );
 
                if ( ( episodeList != null ) && ( episodeList.Count > 0 ) )
                {
                   Console.WriteLine( "Storing episode information locally." );
-                  Program.StoreEpisodesLocally( localStoragePath, commandLine, seasonPathInfo, episodeList );
+                  Program.StoreEpisodesLocally( localStoragePath, clArguments, seasonPathInfo, episodeList );
                   Console.WriteLine( "Successfully stored episode information locally." );
                }
 
@@ -101,7 +104,7 @@ namespace Tvdb2File
                throw new NoEpisodesFoundException( String.Format( "No episodes found for \"{0}\" Season {1}.", seasonPathInfo.SeriesName, seasonPathInfo.SeasonNumber ) );
             }
 
-            Console.WriteLine( String.Format( "Renaming local files in directory{0}:", commandLine.DryRun ? " (Dry Run)" : String.Empty ) );
+            Console.WriteLine( String.Format( "Renaming local files in directory{0}:", clArguments.DryRun ? " (Dry Run)" : String.Empty ) );
             Console.WriteLine( String.Format( "  \"{0}\".", seasonPathInfo.SeasonPath ) );
 
             var fileRenamer = new FileRenamer();
@@ -110,9 +113,9 @@ namespace Tvdb2File
                   Console.WriteLine( String.Format( "    \"{0}\" -> \"{1}\"", e.OldName, e.NewName ) );
                };
 
-            fileRenamer.RenameSeasonEpisodeFiles( seasonPathInfo.SeasonPath, episodeList, commandLine.DryRun, commandLine.CollapseMultiPart );
+            fileRenamer.RenameSeasonEpisodeFiles( seasonPathInfo.SeasonPath, episodeList, clArguments.DryRun, clArguments.CollapseMultiPart );
 
-            Console.WriteLine( String.Format( "Successfully finished renaming local files{0}.", commandLine.DryRun ? " (Dry Run)" : String.Empty ) );
+            Console.WriteLine( String.Format( "Successfully finished renaming local files{0}.", clArguments.DryRun ? " (Dry Run)" : String.Empty ) );
             Console.WriteLine();
          }
          catch ( MultipleSeriesReturnedException ex )
@@ -167,7 +170,7 @@ namespace Tvdb2File
             Console.WriteLine();
             Console.WriteLine( ex.Message );
             Console.WriteLine();
-            Console.WriteLine( CommandLine.Help() );
+            Console.WriteLine( commandLine.Help() );
             Console.WriteLine();
          }
          catch ( Tvdb2FileException ex )
@@ -186,7 +189,7 @@ namespace Tvdb2File
          }
       }
 
-      private static IList<Episode> GetEpisodesLocally( LocalStoragePath localStoragePath, CommandLine commandLine, SeasonPathInfo seasonPathInfo )
+      private static IList<Episode> GetEpisodesLocally( LocalStoragePath localStoragePath, CommandLineArguments clArguments, SeasonPathInfo seasonPathInfo )
       {
          var episodeList = new List<Episode>();
 
@@ -198,9 +201,9 @@ namespace Tvdb2File
                Console.WriteLine( String.Format( "Opened local storage file \"{0}\".", database.DatabasePath ) );
                database.BeginTransaction();
 
-               if ( commandLine.SeriesId == CommandLine.NoSeriesId )
+               if ( clArguments.SeriesId == CommandLineArguments.NoSeriesId )
                {
-                  var searchTerms = ( !String.IsNullOrEmpty( commandLine.SeriesSearchTerms ) ) ? commandLine.SeriesSearchTerms : seasonPathInfo.SeriesName;
+                  var searchTerms = ( !String.IsNullOrEmpty( clArguments.SeriesSearchTerms ) ) ? clArguments.SeriesSearchTerms : seasonPathInfo.SeriesName;
                   Console.WriteLine( String.Format( "Checking local storage for search term \"{0}\".", searchTerms ) );
                   var episodes = database.FindEpisodes( searchTerms, seasonPathInfo.SeasonNumber );
 
@@ -212,8 +215,8 @@ namespace Tvdb2File
                }
                else
                {
-                  Console.WriteLine( String.Format( "Checking local storage for series ID \"{0}\".", commandLine.SeriesId ) );
-                  var episodes = database.FindEpisodes( commandLine.SeriesId, seasonPathInfo.SeasonNumber );
+                  Console.WriteLine( String.Format( "Checking local storage for series ID \"{0}\".", clArguments.SeriesId ) );
+                  var episodes = database.FindEpisodes( clArguments.SeriesId, seasonPathInfo.SeasonNumber );
                   Console.WriteLine( "Loading episode information from local storage." );
                   episodeList.AddRange( episodes );
                }
@@ -233,7 +236,7 @@ namespace Tvdb2File
          return episodeList;
       }
 
-      private static IList<Episode> GetEpisodesRemotely( CommandLine commandLine, SeasonPathInfo seasonPathInfo )
+      private static IList<Episode> GetEpisodesRemotely( CommandLineArguments clArguments, SeasonPathInfo seasonPathInfo )
       {
          var episodeList = new List<Episode>();
 
@@ -257,14 +260,14 @@ namespace Tvdb2File
 
          Stream episodeData = null;
 
-         if ( commandLine.SeriesId == CommandLine.NoSeriesId )
+         if ( clArguments.SeriesId == CommandLineArguments.NoSeriesId )
          {
-            var searchTerms = ( !String.IsNullOrEmpty( commandLine.SeriesSearchTerms ) ) ? commandLine.SeriesSearchTerms : seasonPathInfo.SeriesName;
+            var searchTerms = ( !String.IsNullOrEmpty( clArguments.SeriesSearchTerms ) ) ? clArguments.SeriesSearchTerms : seasonPathInfo.SeriesName;
             episodeData = tvdbClient.GetSeriesEpisodeData( searchTerms, "en" );
          }
          else
          {
-            episodeData = tvdbClient.GetSeriesEpisodeData( commandLine.SeriesId, "en" );
+            episodeData = tvdbClient.GetSeriesEpisodeData( clArguments.SeriesId, "en" );
          }
 
          var seriesEpisodeParser = new SeriesEpisodeDataParser();
@@ -278,7 +281,7 @@ namespace Tvdb2File
          return episodeList;
       }
 
-      private static void StoreEpisodesLocally( LocalStoragePath localStoragePath, CommandLine commandLine, SeasonPathInfo seasonPathInfo, IList<Episode> episodeList )
+      private static void StoreEpisodesLocally( LocalStoragePath localStoragePath, CommandLineArguments clArguments, SeasonPathInfo seasonPathInfo, IList<Episode> episodeList )
       {
          var count = 0;
 

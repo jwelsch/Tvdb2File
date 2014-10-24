@@ -52,6 +52,10 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CommandLineLib, Version=1.0.0.277, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CommandLineLib-1.0.0.278\CommandLineLib.dll</HintPath>
+    </Reference>
     <Reference Include="Ionic.Zip">
       <HintPath>.\Ionic.Zip.dll</HintPath>
     </Reference>
@@ -67,7 +71,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandLine.cs" />
+    <Compile Include="CommandLineArguments.cs" />
     <Compile Include="Episode.cs" />
     <Compile Include="EpisodeFactory.cs" />
     <Compile Include="Exceptions.cs" />
@@ -88,12 +92,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
+    <None Include="postbuild.bat" />
     <None Include="prebuild.bat" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>"$(ProjectDir)postbuild.bat" "$(ConfigurationName)" "$(SolutionDir)" "$(TargetDir)" "$(TargetPath)" "$(TargetName)"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>"$(ProjectDir)prebuild.bat" "$(ConfigurationName)" "$(SolutionDir)" "$(ProjectDir)"</PreBuildEvent>
