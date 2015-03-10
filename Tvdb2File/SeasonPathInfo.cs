@@ -41,7 +41,22 @@ namespace Tvdb2File
       {
          this.SeasonPath = seasonPath;
          this.SeriesPath = Path.GetDirectoryName( this.SeasonPath );
-         this.SeriesName = this.SeriesPath.Substring( Path.GetDirectoryName( this.SeriesPath ).Length + 1 ).TrimEnd( '\\' );
+
+         if ( this.SeriesPath.Length <= 0 )
+         {
+            throw new ArgumentException( "No series directory specified." );
+         }
+
+         var slash = this.SeriesPath.LastIndexOf( '\\' );
+
+         if ( slash < 0 )
+         {
+            this.SeriesName = this.SeriesPath.TrimEnd( '\\' );
+         }
+         else
+         {
+            this.SeriesName = this.SeriesPath.Substring( slash + 1 ).TrimEnd( '\\' );
+         }
 
          var regex = new Regex( @"(?i)Season \d+$" );
          var match = regex.Match( this.SeasonPath );
